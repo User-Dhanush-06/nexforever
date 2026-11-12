@@ -26,8 +26,13 @@ npm run build
 ```
 NexForever/
 ├── index.html                        ← Vite entry HTML (Manrope + Syne fonts)
-├── package.json                      ← Dependencies & scripts
+├── package.json                      ← Frontend dependencies & scripts
 ├── vite.config.js                    ← Vite configuration
+├── assets/                           ← Archival brand & logo assets
+├── backend/                          ← Java 17 + Spring Boot 3 API (Phase 2+)
+├── infrastructure/                   ← Docker & environment configs (Phase 2 & 7)
+├── docs/
+│   └── ARCHITECTURE.md               ← Phase 1 system audit & full-stack design
 │
 ├── public/
 │   └── images/
