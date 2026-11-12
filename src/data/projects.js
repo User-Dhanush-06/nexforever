@@ -48,3 +48,22 @@ export const projectsData = [
   },
   ────────────────────────────────────────────────────────────────────── */
 ];
+
+/**
+ * Backend-ready loader: Fetches projects from a configured API/CMS JSON
+ * endpoint if provided in `siteConfig.api.projectsEndpoint`, falling back
+ * cleanly to local `projectsData` when unset or unreachable.
+ */
+export async function loadPortfolioProjects(endpoint = '') {
+  if (!endpoint) return projectsData;
+  try {
+    const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+    if (!res.ok) return projectsData;
+    const remote = await res.json();
+    if (Array.isArray(remote)) return remote;
+    if (remote && Array.isArray(remote.projects)) return remote.projects;
+    return projectsData;
+  } catch {
+    return projectsData;
+  }
+}

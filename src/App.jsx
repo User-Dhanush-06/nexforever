@@ -20,6 +20,8 @@ gsap.registerPlugin(ScrollTrigger);
 export default function App() {
   const shellRef = useRef(null);
   const [selectedService, setSelectedService] = useState('');
+  const [selectedPackage, setSelectedPackage] = useState('');
+  const [selectedAudience, setSelectedAudience] = useState('');
   const { progress, showBackToTop, scrollToTop } = useScrollProgress();
 
   // Initialize Lenis smooth scroll & GSAP ScrollTrigger reveals
@@ -97,7 +99,8 @@ export default function App() {
       {/* 3D WebGL Background Scene (Three.js + R3F) */}
       <SceneBackground />
 
-      {/* Fine Architectural Grid + Cinematic Ambient Overlay */}
+      {/* Atmospheric Side Gradients, Architectural Grid & Vignette */}
+      <div className="ambient-sides" aria-hidden="true" />
       <div className="ambient-grid" aria-hidden="true" />
       <div className="ambient-overlay" aria-hidden="true" />
 
@@ -108,10 +111,18 @@ export default function App() {
         <main id="main-content">
           <Hero />
           <About />
-          <Services onEnquireService={setSelectedService} />
+          <Services
+            onEnquireService={setSelectedService}
+            onSelectAudience={setSelectedAudience}
+            onSelectPackage={setSelectedPackage}
+          />
           <Portfolio />
           <Approach />
-          <Contact preselectedService={selectedService} />
+          <Contact
+            preselectedService={selectedService}
+            preselectedAudience={selectedAudience}
+            preselectedPackage={selectedPackage}
+          />
         </main>
 
         <Footer />

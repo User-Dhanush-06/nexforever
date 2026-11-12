@@ -2,10 +2,15 @@ import React from 'react';
 import { Image as ImageIcon, ArrowUpRight, Layers } from 'lucide-react';
 import GlassCard from '../ui/GlassCard';
 
-export default function ProjectCard({ project, onSelect }) {
+export default function ProjectCard({ project, onSelect, shouldSuppressClick }) {
   const thumb = project.coverImage || project.image;
   const summary = project.shortDescription || project.description;
   const techs = Array.isArray(project.technologies) ? project.technologies : [];
+
+  const handleClick = () => {
+    if (shouldSuppressClick && shouldSuppressClick()) return;
+    onSelect(project);
+  };
 
   return (
     <GlassCard
@@ -17,15 +22,15 @@ export default function ProjectCard({ project, onSelect }) {
       <button
         type="button"
         className="project-card__trigger"
-        onClick={() => onSelect(project)}
+        onClick={handleClick}
         aria-label={`View details for ${project.title}`}
       >
         <div className="project-card__thumb">
           {thumb ? (
-            <img src={thumb} alt={project.title} loading="lazy" />
+            <img src={thumb} alt={project.title} loading="lazy" draggable={false} />
           ) : (
             <div className="project-card__placeholder">
-              <ImageIcon size={34} aria-hidden="true" />
+              <ImageIcon size={36} aria-hidden="true" />
               <span>{project.category}</span>
             </div>
           )}
@@ -60,7 +65,7 @@ export default function ProjectCard({ project, onSelect }) {
           <div className="project-card__footer">
             <span className="project-card__cta">
               <Layers size={14} aria-hidden="true" />
-              <span>Inspect Project</span>
+              <span>View Project</span>
             </span>
           </div>
         </div>
@@ -68,4 +73,3 @@ export default function ProjectCard({ project, onSelect }) {
     </GlassCard>
   );
 }
-

@@ -164,7 +164,10 @@
   }
 
   .portfolio__blueprint-row,
-  .project-modal__grid {
+  .project-modal__grid,
+  .audience-tracks,
+  .packages-grid,
+  .testimonials-grid {
     grid-template-columns: 1fr;
   }
 
@@ -250,6 +253,11 @@
     padding: 2rem 1.45rem;
   }
 
+  .audience-card,
+  .package-card {
+    padding: 1.75rem 1.35rem;
+  }
+
   .value-card__trigger {
     padding: 1.75rem 1.45rem;
   }
@@ -258,8 +266,48 @@
     padding: 2.75rem 1.25rem;
   }
 
-  .portfolio__grid {
+  .portfolio-carousel__toolbar {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .wizard-steps {
     grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .wizard-options,
+  .wizard-options--compact {
+    grid-template-columns: 1fr;
+  }
+
+  .wizard-nav {
+    flex-wrap: wrap;
+  }
+
+  .wizard-nav--submit {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .wizard-nav--submit .btn-submit {
+    width: 100%;
+  }
+
+  .faq-item__trigger {
+    padding: 1rem 1.15rem;
+    font-size: 0.9rem;
+  }
+
+  .faq-item__answer {
+    padding: 0 1.15rem 1.05rem;
+  }
+
+  .ambient-sides::before,
+  .ambient-sides::after {
+    width: 56vw;
+    min-width: 160px;
+    opacity: 0.78;
   }
 
   .footer__bottom {

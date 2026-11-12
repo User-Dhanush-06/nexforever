@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Compass, Layers, Cpu, Rocket } from 'lucide-react';
+import { Compass, Layers, Cpu, Rocket, ChevronDown } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
 
 export default function Approach() {
   const sectionRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0.25);
   const [activeStep, setActiveStep] = useState(0);
+  const [openFaq, setOpenFaq] = useState(0);
 
   const steps = [
     {
@@ -38,14 +39,32 @@ export default function Approach() {
     },
   ];
 
+  const faqs = [
+    {
+      q: 'How do we kick off a new project with NexForever?',
+      a: 'Start using the Project Inquiry Wizard in our Contact section. Once you share your service needs, planning scope and project idea, we review requirements together during the Discover stage.',
+    },
+    {
+      q: 'Can we combine multiple studio services or customize Launch, Grow & Elevate?',
+      a: 'Yes. Launch, Grow and Elevate act as flexible starting points — never rigid subscriptions — allowing you to combine Web Development, Video Production, Creative Design and Digital Marketing around your real goals.',
+    },
+    {
+      q: 'How are scope, investment and schedule determined?',
+      a: 'Every project is scoped transparently around your objectives and deliverables during Strategize, rather than relying on one-size-fits-all templates or fixed assumptions.',
+    },
+    {
+      q: 'Do you support responsive websites and interactive visual experiences?',
+      a: 'Every digital experience we engineer is built mobile-first, tested across modern screen sizes and crafted with accessibility and smooth performance in mind.',
+    },
+  ];
+
   // Scroll-driven timeline illumination across #approach section
   useEffect(() => {
     const handleScroll = () => {
       if (!sectionRef.current) return;
       const rect = sectionRef.current.getBoundingClientRect();
       const vh = window.innerHeight;
-      // Map section progression across viewport into 0..1
-      const raw = (vh * 0.72 - rect.top) / (rect.height * 0.75);
+      const raw = (vh * 0.72 - rect.top) / (rect.height * 0.6);
       const clamped = Math.max(0, Math.min(1, raw));
       setScrollProgress(clamped);
 
@@ -70,7 +89,7 @@ export default function Approach() {
       <div className="container">
         <SectionHeading
           eyebrow="How We Work"
-          title="From Idea to Impact."
+          title={<>From Idea to <span className="text-outline-mint">Impact.</span></>}
           subtitle="A structured four-stage workflow designed for clarity, craft and dependable delivery."
           align="center"
         />
@@ -112,6 +131,36 @@ export default function Approach() {
               </button>
             );
           })}
+        </div>
+
+        {/* Concise Studio FAQ Strip */}
+        <div className="faq-block" aria-label="Frequently Asked Questions">
+          <div className="faq-block__header">
+            <span className="section-eyebrow">Common Questions</span>
+            <h3 className="faq-block__heading">Before We Begin</h3>
+          </div>
+
+          <div className="faq-list">
+            {faqs.map((item, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div key={item.q} className={`faq-item ${isOpen ? 'faq-item--open' : ''}`}>
+                  <button
+                    type="button"
+                    className="faq-item__trigger"
+                    onClick={() => setOpenFaq(isOpen ? -1 : idx)}
+                    aria-expanded={isOpen}
+                  >
+                    <span>{item.q}</span>
+                    <ChevronDown size={17} className="faq-item__chevron" aria-hidden="true" />
+                  </button>
+                  <div className="faq-item__panel">
+                    <p className="faq-item__answer">{item.a}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

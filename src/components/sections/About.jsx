@@ -43,6 +43,13 @@ export default function About() {
     'Audience Growth',
   ];
 
+  const partnerSectors = [
+    'Startups & Founders',
+    'Growing Businesses',
+    'Creators & Personal Brands',
+    'Digital-First Teams',
+  ];
+
   return (
     <section id="about" className="section about-section" aria-label="About NexForever">
       <div className="container">
@@ -50,7 +57,7 @@ export default function About() {
           <div className="about__heading-col">
             <SectionHeading
               eyebrow="Who We Are"
-              title={<>More Than<br />Just Digital.</>}
+              title={<>More Than<br /><span className="text-outline-mint">Just Digital.</span></>}
             />
 
             {/* Visual Studio Synthesis Element */}
@@ -60,9 +67,9 @@ export default function About() {
                 <Compass size={20} className="accent-mint" />
               </div>
               <div className="about__visual-copy">
-                <span className="about__visual-label">Studio Discipline</span>
+                <span className="about__visual-label">Small Collaborative Studio</span>
                 <p className="about__visual-text">
-                  Uniting engineering, visual direction and storytelling into cohesive digital systems.
+                  Accessible, flexible collaboration uniting web engineering, video production, brand design and digital marketing in one cohesive studio.
                 </p>
               </div>
             </GlassCard>
@@ -70,23 +77,35 @@ export default function About() {
 
           <div className="about__text-col">
             <p className="about__lead">
-              We bring technology and creativity together to build digital experiences that make an impact.
+              Technology and creativity working closely together — tailored for growing brands and independent creators.
             </p>
             <p className="about__body">
-              At NexForever, we believe every great idea deserves the right execution. We bring together
-              technology, creativity and thoughtful design to help businesses build a stronger digital presence.
+              NexForever operates as a focused collaborative creative technology studio. We pair premium design craft with practical, adaptable solutions so ambitious businesses and creators can launch with confidence.
             </p>
             <p className="about__body">
-              From developing digital platforms to creating engaging visual content, our focus is on delivering
-              meaningful solutions that make an impact.
+              From custom digital platforms and brand systems to engaging visual production, everything we create is built to communicate value clearly and endure over time.
             </p>
 
-            <div className="about__pillars" aria-label="Studio Focus Areas">
-              {pillars.map((pillar) => (
-                <span key={pillar} className="about__pillar-pill">
-                  {pillar}
-                </span>
-              ))}
+            <div className="about__meta-block">
+              <span className="about__meta-label">Core Disciplines</span>
+              <div className="about__pillars" aria-label="Studio Focus Areas">
+                {pillars.map((pillar) => (
+                  <span key={pillar} className="about__pillar-pill">
+                    {pillar}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="about__meta-block">
+              <span className="about__meta-label">Who We Build For</span>
+              <div className="about__pillars" aria-label="Who We Serve">
+                {partnerSectors.map((sector) => (
+                  <span key={sector} className="about__pillar-pill about__pillar-pill--subtle">
+                    {sector}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>

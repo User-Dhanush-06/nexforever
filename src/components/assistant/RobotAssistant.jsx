@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import AssistantPanel from './AssistantPanel';
 import { sectionWelcomePrompts } from './assistantData';
 
-const DISMISS_STORAGE_KEY = 'nexforever_assistant_bubble_dismissed';
+const DISMISS_STORAGE_KEY = 'nexforever_chitti_bubble_dismissed';
 
 export default function RobotAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,17 +18,18 @@ export default function RobotAssistant() {
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState([
     {
-      id: 'welcome-init',
+      id: 'chitti-welcome-init',
       sender: 'bot',
-      text: "Welcome to NexForever. I'm Nex, your studio guide — ask me about our services, process, work or how to start a project.",
+      text: "Hey! I'm CHITTI, NexForever's futuristic studio guide. Ask me about our services, portfolio showcase, workflow or starting a project.",
       action: { label: 'Explore Services', target: '#services' },
     },
   ]);
 
   const typingTimerRef = useRef(null);
+  const followerRef = useRef(null);
   const botRef = useRef(null);
 
-  // Track currently visible section for contextual greeting prompt
+  // Track active section via IntersectionObserver for contextual CHITTI prompts
   useEffect(() => {
     const sectionIds = ['home', 'about', 'services', 'portfolio', 'approach', 'contact'];
     const sections = sectionIds.map((id) => document.getElementById(id)).filter(Boolean);
@@ -49,24 +50,73 @@ export default function RobotAssistant() {
     return () => observer.disconnect();
   }, []);
 
-  // Subtle eye-tracking tilt toward cursor when pointer moves
+  // Bounded spring-like mouse follow & gaze tracking via requestAnimationFrame
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (mq.matches) return;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const coarsePointer = window.matchMedia('(hover: none)').matches;
+    if (reducedMotion || coarsePointer) return;
 
-    const handleMove = (e) => {
+    const target = { x: 0, y: 0, lookX: 0, lookY: 0 };
+    const current = { x: 0, y: 0, lookX: 0, lookY: 0 };
+    const velocity = { x: 0, y: 0 };
+    let rafId = null;
+
+    const handlePointerMove = (e) => {
       if (!botRef.current) return;
       const rect = botRef.current.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
-      const dx = Math.max(-1, Math.min(1, (e.clientX - cx) / 360));
-      const dy = Math.max(-1, Math.min(1, (e.clientY - cy) / 360));
-      botRef.current.style.setProperty('--look-x', `${(dx * 3).toFixed(2)}px`);
-      botRef.current.style.setProperty('--look-y', `${(dy * 2.2).toFixed(2)}px`);
+
+      const normX = Math.max(-1, Math.min(1, (e.clientX - cx) / 420));
+      const normY = Math.max(-1, Math.min(1, (e.clientY - cy) / 420));
+
+      // Subtle bounded chase (±14px X, ±10px Y) + eye/visor gaze
+      target.x = normX * 14;
+      target.y = normY * 10;
+      target.lookX = normX * 3.4;
+      target.lookY = normY * 2.4;
     };
 
-    window.addEventListener('pointermove', handleMove, { passive: true });
-    return () => window.removeEventListener('pointermove', handleMove);
+    const handlePointerLeave = () => {
+      target.x = 0;
+      target.y = 0;
+      target.lookX = 0;
+      target.lookY = 0;
+    };
+
+    const tick = () => {
+      // Soft damped spring physics
+      const stiffness = 0.09;
+      const damping = 0.78;
+
+      velocity.x = (velocity.x + (target.x - current.x) * stiffness) * damping;
+      velocity.y = (velocity.y + (target.y - current.y) * stiffness) * damping;
+
+      current.x += velocity.x;
+      current.y += velocity.y;
+      current.lookX += (target.lookX - current.lookX) * 0.14;
+      current.lookY += (target.lookY - current.lookY) * 0.14;
+
+      if (followerRef.current) {
+        followerRef.current.style.transform = `translate3d(${current.x.toFixed(2)}px, ${current.y.toFixed(2)}px, 0)`;
+      }
+      if (botRef.current) {
+        botRef.current.style.setProperty('--look-x', `${current.lookX.toFixed(2)}px`);
+        botRef.current.style.setProperty('--look-y', `${current.lookY.toFixed(2)}px`);
+      }
+
+      rafId = window.requestAnimationFrame(tick);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    document.addEventListener('mouseleave', handlePointerLeave, { passive: true });
+    rafId = window.requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('mouseleave', handlePointerLeave);
+      if (rafId !== null) window.cancelAnimationFrame(rafId);
+    };
   }, []);
 
   useEffect(() => {
@@ -103,19 +153,17 @@ export default function RobotAssistant() {
   const handleSelectSuggestion = (item) => {
     if (isTyping) return;
 
-    const userMsg = {
-      id: `user-${Date.now()}`,
-      sender: 'user',
-      text: item.question,
-    };
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => [
+      ...prev,
+      { id: `user-${Date.now()}`, sender: 'user', text: item.question },
+    ]);
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) {
       setMessages((prev) => [
         ...prev,
         {
-          id: `bot-${Date.now() + 1}`,
+          id: `chitti-${Date.now() + 1}`,
           sender: 'bot',
           text: item.answer,
           action: item.action,
@@ -130,7 +178,7 @@ export default function RobotAssistant() {
       setMessages((prev) => [
         ...prev,
         {
-          id: `bot-${Date.now() + 1}`,
+          id: `chitti-${Date.now() + 1}`,
           sender: 'bot',
           text: item.answer,
           action: item.action,
@@ -151,7 +199,11 @@ export default function RobotAssistant() {
     sectionWelcomePrompts[activeSection] || sectionWelcomePrompts.home;
 
   return (
-    <div className="robot-assistant-root" aria-live="polite">
+    <div
+      className="robot-assistant-root"
+      data-chitti-name="CHITTI"
+      aria-live="polite"
+    >
       <AssistantPanel
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
@@ -161,7 +213,7 @@ export default function RobotAssistant() {
         onNavigate={handleNavigate}
       />
 
-      {/* Contextual Floating Prompt Bubble (only shown once per session until dismissed/opened) */}
+      {/* Contextual Welcome Speech Bubble */}
       {!isOpen && !bubbleDismissed && (
         <div className="robot-bubble" role="status">
           <button
@@ -175,100 +227,130 @@ export default function RobotAssistant() {
             type="button"
             className="robot-bubble__close"
             onClick={handleDismissBubble}
-            aria-label="Dismiss assistant prompt"
+            aria-label="Dismiss CHITTI prompt"
           >
             <X size={12} />
           </button>
         </div>
       )}
 
-      {/* Futuristic Pearl-Chrome SVG Robot Mascot Trigger */}
+      {/* Futuristic Pearl-White & Metallic Silver 3D-Styled CHITTI */}
       <button
         ref={botRef}
         type="button"
         className={`robot-trigger ${isOpen ? 'robot-trigger--active' : ''}`}
         onClick={handleTogglePanel}
-        aria-label={isOpen ? 'Close NexForever Assistant' : 'Open NexForever Studio Assistant'}
+        aria-label={isOpen ? 'Close CHITTI Studio Assistant' : 'Open CHITTI Studio Assistant'}
         aria-expanded={isOpen}
       >
-        <span className="robot-trigger__aura" aria-hidden="true" />
-        <svg
-          className="robot-svg"
-          viewBox="0 0 84 84"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <defs>
-            <linearGradient id="nexBotShell" x1="18" y1="12" x2="66" y2="72" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#FFFFFF" />
-              <stop offset="45%" stopColor="#DDE4EE" />
-              <stop offset="100%" stopColor="#8E9AAE" />
-            </linearGradient>
-            <linearGradient id="nexBotVisor" x1="22" y1="28" x2="62" y2="54" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#141923" />
-              <stop offset="100%" stopColor="#07090D" />
-            </linearGradient>
-            <radialGradient id="nexBotGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#69E5C1" stopOpacity="0.45" />
-              <stop offset="100%" stopColor="#69E5C1" stopOpacity="0" />
-            </radialGradient>
-          </defs>
+        <div ref={followerRef} className="robot-chitti-follower">
+          <span className="robot-trigger__aura" aria-hidden="true" />
+          <svg
+            className="robot-svg"
+            viewBox="0 0 88 88"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <defs>
+              <linearGradient id="chittiPearlShell" x1="16" y1="10" x2="72" y2="76" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#FFFFFF" />
+                <stop offset="40%" stopColor="#E6ECF5" />
+                <stop offset="78%" stopColor="#B8C3D4" />
+                <stop offset="100%" stopColor="#7C889B" />
+              </linearGradient>
+              <linearGradient id="chittiChromeBand" x1="18" y1="54" x2="70" y2="76" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#F5F8FC" />
+                <stop offset="50%" stopColor="#9DA8BA" />
+                <stop offset="100%" stopColor="#5D6778" />
+              </linearGradient>
+              <linearGradient id="chittiVisorGlass" x1="22" y1="26" x2="66" y2="54" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#161C27" />
+                <stop offset="65%" stopColor="#080B10" />
+                <stop offset="100%" stopColor="#040507" />
+              </linearGradient>
+              <radialGradient id="chittiMintGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#69E5C1" stopOpacity="0.45" />
+                <stop offset="100%" stopColor="#69E5C1" stopOpacity="0" />
+              </radialGradient>
+            </defs>
 
-          {/* Soft Under-shadow */}
-          <ellipse cx="42" cy="75" rx="18" ry="4" fill="url(#nexBotGlow)" />
+            {/* Ambient Floor Reflection */}
+            <ellipse cx="44" cy="79" rx="19" ry="4" fill="url(#chittiMintGlow)" />
 
-          {/* Antenna Stem & Glowing Beacon */}
-          <rect x="40.5" y="10" width="3" height="9" rx="1.5" fill="#AEB8C9" />
-          <circle cx="42" cy="8.5" r="3.6" fill="#69E5C1" className="robot-svg__beacon" />
+            {/* Dual Antenna Fin + Glowing Mint Beacon */}
+            <rect x="42.4" y="8" width="3.2" height="10" rx="1.6" fill="url(#chittiChromeBand)" />
+            <circle cx="44" cy="7.5" r="3.8" fill="#69E5C1" className="robot-svg__beacon" />
 
-          {/* Side Ear Pods */}
-          <rect x="11" y="33" width="6" height="16" rx="3" fill="#B6C0D0" />
-          <rect x="67" y="33" width="6" height="16" rx="3" fill="#B6C0D0" />
-          <circle cx="14" cy="41" r="1.4" fill="#69E5C1" />
-          <circle cx="70" cy="41" r="1.4" fill="#69E5C1" />
+            {/* Articulated Side Pods */}
+            <rect x="10" y="33" width="7" height="18" rx="3.5" fill="url(#chittiChromeBand)" />
+            <rect x="71" y="33" width="7" height="18" rx="3.5" fill="url(#chittiChromeBand)" />
+            <circle cx="13.5" cy="42" r="1.6" fill="#69E5C1" />
+            <circle cx="74.5" cy="42" r="1.6" fill="#69E5C1" />
 
-          {/* Pearl-Chrome Head & Compact Torso */}
-          <rect x="16" y="18" width="52" height="44" rx="20" fill="url(#nexBotShell)" />
-          <path
-            d="M27 63.5C27 61 29 59.5 32 59.5H52C55 59.5 57 61 57 63.5V66C57 69.5 51 72 42 72C33 72 27 69.5 27 66V63.5Z"
-            fill="url(#nexBotShell)"
-          />
+            {/* Pearl-Chrome Curved Head */}
+            <rect
+              x="16"
+              y="17"
+              width="56"
+              height="44"
+              rx="22"
+              fill="url(#chittiPearlShell)"
+              stroke="rgba(255,255,255,0.45)"
+              strokeWidth="0.8"
+            />
 
-          {/* Top Specular Highlight */}
-          <path
-            d="M26 24.5C30 21 36 20 42 20C48 20 54 21 58 24.5"
-            stroke="rgba(255,255,255,0.85)"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-
-          {/* Obsidian Glass Visor */}
-          <rect
-            x="22"
-            y="27"
-            width="40"
-            height="27"
-            rx="12"
-            fill="url(#nexBotVisor)"
-            stroke="rgba(255,255,255,0.2)"
-            strokeWidth="1"
-          />
-
-          {/* Interactive Mint-Green Eyes & Friendly Smile */}
-          <g className="robot-svg__face">
-            <rect x="30" y="35.5" width="6" height="8" rx="3" fill="#69E5C1" className="robot-svg__eye" />
-            <rect x="48" y="35.5" width="6" height="8" rx="3" fill="#69E5C1" className="robot-svg__eye" />
+            {/* Compact Rounded Shoulder/Torso with Mint Chest Core */}
             <path
-              d="M38.5 46.5C39.8 48.2 44.2 48.2 45.5 46.5"
-              stroke="#69E5C1"
-              strokeWidth="1.8"
+              d="M27 62.5C27 59.8 29.5 58 33 58H55C58.5 58 61 59.8 61 62.5V67C61 71.5 53.5 74.5 44 74.5C34.5 74.5 27 71.5 27 67V62.5Z"
+              fill="url(#chittiPearlShell)"
+            />
+            <circle cx="44" cy="67.5" r="2.6" fill="#69E5C1" opacity="0.9" />
+
+            {/* Studio Specular Rim on Helmet */}
+            <path
+              d="M26 23.5C31 19.8 37.5 19 44 19C50.5 19 57 19.8 62 23.5"
+              stroke="rgba(255,255,255,0.9)"
+              strokeWidth="2"
               strokeLinecap="round"
             />
-          </g>
-        </svg>
+
+            {/* Deep Obsidian Visor */}
+            <rect
+              x="22"
+              y="26"
+              width="44"
+              height="28"
+              rx="13"
+              fill="url(#chittiVisorGlass)"
+              stroke="rgba(255,255,255,0.22)"
+              strokeWidth="1"
+            />
+
+            {/* Visor Glint Streak */}
+            <path
+              d="M27 31C30 28.5 34.5 28 38 28.5"
+              stroke="rgba(255,255,255,0.25)"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+            />
+
+            {/* Cursor-Tracking Mint-Green Glowing Eyes & Smile */}
+            <g className="robot-svg__face">
+              <rect x="30.5" y="34.5" width="7" height="9" rx="3.5" fill="#69E5C1" className="robot-svg__eye" />
+              <rect x="50.5" y="34.5" width="7" height="9" rx="3.5" fill="#69E5C1" className="robot-svg__eye" />
+              <circle cx="32.5" cy="36.8" r="1.1" fill="#FFFFFF" opacity="0.85" />
+              <circle cx="52.5" cy="36.8" r="1.1" fill="#FFFFFF" opacity="0.85" />
+              <path
+                d="M39.5 47.2C41.5 49.2 46.5 49.2 48.5 47.2"
+                stroke="#69E5C1"
+                strokeWidth="1.9"
+                strokeLinecap="round"
+              />
+            </g>
+          </svg>
+        </div>
       </button>
     </div>
   );
 }
-

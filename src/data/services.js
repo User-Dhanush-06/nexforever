@@ -78,3 +78,73 @@ export const servicesData = [
     icon: 'TrendingUp',
   },
 ];
+
+export const audienceSolutionsData = [
+  {
+    id: 'businesses',
+    eyebrow: '01 / FOR BUSINESSES & BRANDS',
+    title: 'Businesses, Startups & Growing Brands',
+    description:
+      'End-to-end digital foundations that turn brand positioning into dependable websites, visual assets and consistent market visibility.',
+    deliverables: [
+      'Company websites, landing pages & custom web applications',
+      'Brand identity systems, print assets & marketing creatives',
+      'Promotional brand films & product storytelling',
+      'Structured social presence & brand awareness campaigns',
+    ],
+    ctaLabel: 'Enquire for Your Business',
+    audienceValue: 'Business / Brand',
+  },
+  {
+    id: 'creators',
+    eyebrow: '02 / FOR CREATORS & TALENT',
+    title: 'Content Creators & Personal Brands',
+    description:
+      'Studio-grade production, custom digital hubs and cohesive visual identity systems designed to elevate independent voices.',
+    deliverables: [
+      'Personal brand websites, portfolios & collaboration hubs',
+      'Cinematic personal branding videos, reels & video editing',
+      'Consistent thumbnail systems, posters & social graphics',
+      'Content planning & multi-platform social optimization',
+    ],
+    ctaLabel: 'Enquire as a Creator',
+    audienceValue: 'Creator / Personal Brand',
+  },
+];
+
+export const packagesData = [
+  {
+    name: 'Launch',
+    tag: 'Customizable Scope',
+    summary: 'For new businesses establishing their digital presence.',
+    focus: [
+      'Core website or digital landing hub',
+      'Foundational visual identity & brand essentials',
+      'Initial social launch creatives & content setup',
+    ],
+    recommendedService: 'Web Development',
+  },
+  {
+    name: 'Grow',
+    tag: 'Customizable Scope',
+    summary: 'For businesses strengthening their online presence.',
+    focus: [
+      'Expanded multi-page web platform or content hub',
+      'Cohesive video storytelling & social content assets',
+      'Consistent digital marketing & audience engagement',
+    ],
+    recommendedService: 'Video Production & Content Creation',
+    highlighted: true,
+  },
+  {
+    name: 'Elevate',
+    tag: 'Customizable Scope',
+    summary: 'For brands requiring more comprehensive digital solutions.',
+    focus: [
+      'Custom interactive web applications & digital systems',
+      'Integrated brand architecture & cinematic production',
+      'Multi-channel campaign strategy & tailored deliverables',
+    ],
+    recommendedService: 'Creative Design & Branding',
+  },
+];

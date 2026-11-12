@@ -18,9 +18,13 @@ export const siteConfig = {
     name: 'NexForever',
     tagline: "Built for What's Next. Made to Last.",
     description:
-      'A creative technology studio focused on building digital experiences, developing websites and applications, producing engaging visual content, and helping businesses establish their digital presence.',
+      'A collaborative creative technology studio helping businesses, startups, brands and content creators build digital platforms, visual stories and strong online presence.',
     logo: '/images/nexforever-logo.png',
     availability: 'Available for New Projects',
+  },
+  api: {
+    projectsEndpoint: '',     // Optional JSON endpoint returning an array of project objects
+    testimonialsEndpoint: '', // Optional JSON endpoint returning verified client testimonials
   },
   contact: {
     email: '[ADD YOUR EMAIL]',           // e.g. hello@nexforever.studio

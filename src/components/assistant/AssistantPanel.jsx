@@ -32,7 +32,7 @@ export default function AssistantPanel({
       className={`assistant-panel ${isOpen ? 'assistant-panel--open' : ''}`}
       role="dialog"
       aria-modal="false"
-      aria-label="NexForever Studio Assistant"
+      aria-label="CHITTI Studio Assistant"
       aria-hidden={!isOpen}
     >
       {/* Panel Header */}
@@ -40,9 +40,9 @@ export default function AssistantPanel({
         <div className="assistant-panel__identity">
           <span className="assistant-panel__dot" aria-hidden="true" />
           <div>
-            <h3 className="assistant-panel__title">Nex</h3>
+            <h3 className="assistant-panel__title">CHITTI</h3>
             <span className="assistant-panel__subtitle">
-              <Sparkles size={11} aria-hidden="true" /> Studio Guide
+              <Sparkles size={11} aria-hidden="true" /> NexForever Assistant
             </span>
           </div>
         </div>
@@ -50,7 +50,7 @@ export default function AssistantPanel({
           type="button"
           className="assistant-panel__close"
           onClick={onClose}
-          aria-label="Close Studio Assistant"
+          aria-label="Close CHITTI Assistant"
         >
           <X size={17} />
         </button>
@@ -78,7 +78,10 @@ export default function AssistantPanel({
         ))}
 
         {isTyping && (
-          <div className="assistant-msg assistant-msg--bot assistant-msg--typing" aria-label="Nex is typing">
+          <div
+            className="assistant-msg assistant-msg--bot assistant-msg--typing"
+            aria-label="CHITTI is typing"
+          >
             <span />
             <span />
             <span />
@@ -88,7 +91,7 @@ export default function AssistantPanel({
 
       {/* Suggested Question Chips */}
       <div className="assistant-panel__suggestions">
-        <span className="assistant-panel__prompt-label">Quick Questions</span>
+        <span className="assistant-panel__prompt-label">Suggested Questions</span>
         <div className="assistant-panel__chips">
           {assistantSuggestions.map((item) => (
             <button
@@ -106,4 +109,3 @@ export default function AssistantPanel({
     </div>
   );
 }
-

@@ -1,9 +1,24 @@
 import React, { useState } from 'react';
-import { Code2, Video, Palette, TrendingUp, ChevronDown, ArrowRight } from 'lucide-react';
+import {
+  Code2,
+  Video,
+  Palette,
+  TrendingUp,
+  ChevronDown,
+  ArrowRight,
+  Building2,
+  UserCheck,
+  Check,
+  SlidersHorizontal,
+} from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
 import GlassCard from '../ui/GlassCard';
 import Button from '../ui/Button';
-import { servicesData } from '../../data/services';
+import {
+  servicesData,
+  audienceSolutionsData,
+  packagesData,
+} from '../../data/services';
 
 const iconMap = {
   Code2,
@@ -12,17 +27,36 @@ const iconMap = {
   TrendingUp,
 };
 
-export default function Services({ onEnquireService }) {
+export default function Services({
+  onEnquireService,
+  onSelectAudience,
+  onSelectPackage,
+}) {
   const [expandedService, setExpandedService] = useState('01');
 
-  const handleEnquire = (serviceTitle) => {
-    if (onEnquireService) {
-      onEnquireService(serviceTitle);
-    }
+  const scrollToContact = () => {
     const contactEl = document.getElementById('contact');
     if (contactEl) {
       contactEl.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleEnquire = (serviceTitle) => {
+    if (onEnquireService) onEnquireService(serviceTitle);
+    scrollToContact();
+  };
+
+  const handleAudienceEnquire = (audienceValue) => {
+    if (onSelectAudience) onSelectAudience(audienceValue);
+    scrollToContact();
+  };
+
+  const handlePackageSelect = (pkg) => {
+    if (onSelectPackage) onSelectPackage(pkg.name);
+    if (onEnquireService && pkg.recommendedService) {
+      onEnquireService(pkg.recommendedService);
+    }
+    scrollToContact();
   };
 
   return (
@@ -30,7 +64,7 @@ export default function Services({ onEnquireService }) {
       <div className="container">
         <SectionHeading
           eyebrow="What We Do"
-          title={<>What We Bring<br />to the Table.</>}
+          title={<>What We Bring<br />to the <span className="text-outline-mint">Table.</span></>}
           subtitle="Creative thinking meets technical execution. Explore our core capabilities and tap any card for deeper scope."
         />
 
@@ -102,6 +136,103 @@ export default function Services({ onEnquireService }) {
               </GlassCard>
             );
           })}
+        </div>
+
+        {/* Dedicated Solutions for Businesses & Content Creators */}
+        <div id="audience-solutions" className="studio-subblock">
+          <div className="studio-subblock__header">
+            <span className="section-eyebrow">Built For Two Primary Audiences</span>
+            <h3 className="studio-subblock__title">
+              Tailored Tracks for <span className="text-outline-mint">Businesses &amp; Creators.</span>
+            </h3>
+            <p className="studio-subblock__sub">
+              One studio bringing engineering, design and content production together — adapted to how businesses operate and how creators grow.
+            </p>
+          </div>
+
+          <div className="audience-tracks">
+            {audienceSolutionsData.map((track) => {
+              const TrackIcon = track.id === 'businesses' ? Building2 : UserCheck;
+              return (
+                <GlassCard key={track.id} className="audience-card" hoverEffect={false}>
+                  <div className="audience-card__top">
+                    <span className="audience-card__eyebrow">{track.eyebrow}</span>
+                    <div className="service-card__icon" aria-hidden="true">
+                      <TrackIcon size={20} />
+                    </div>
+                  </div>
+                  <h4 className="audience-card__title">{track.title}</h4>
+                  <p className="audience-card__desc">{track.description}</p>
+                  <ul className="audience-card__list">
+                    {track.deliverables.map((item) => (
+                      <li key={item} className="audience-card__list-item">
+                        <Check size={14} className="accent-mint" aria-hidden="true" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="audience-card__footer">
+                    <Button
+                      variant="glass"
+                      icon={ArrowRight}
+                      className="audience-card__btn"
+                      onClick={() => handleAudienceEnquire(track.audienceValue)}
+                    >
+                      {track.ctaLabel}
+                    </Button>
+                  </div>
+                </GlassCard>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Customizable Studio Packages: Launch, Grow, Elevate */}
+        <div id="packages" className="studio-subblock">
+          <div className="studio-subblock__header">
+            <span className="section-eyebrow">Flexible Engagement Paths</span>
+            <h3 className="studio-subblock__title">
+              Launch. Grow. <span className="text-outline-mint">Elevate.</span>
+            </h3>
+            <p className="studio-subblock__sub">
+              Starting frameworks tailored cleanly to your real deliverables and stage — never fixed subscriptions or rigid pricing templates.
+            </p>
+          </div>
+
+          <div className="packages-grid">
+            {packagesData.map((pkg) => (
+              <GlassCard
+                key={pkg.name}
+                className={`package-card ${pkg.highlighted ? 'package-card--featured' : ''}`}
+                hoverEffect={false}
+              >
+                <div className="package-card__top">
+                  <h4 className="package-card__name">{pkg.name}</h4>
+                  <span className="package-card__badge">
+                    <SlidersHorizontal size={12} aria-hidden="true" />
+                    <span>{pkg.tag}</span>
+                  </span>
+                </div>
+                <p className="package-card__summary">{pkg.summary}</p>
+                <ul className="package-card__list">
+                  {pkg.focus.map((point) => (
+                    <li key={point} className="package-card__item">
+                      <span className="service-card__cap-bullet" aria-hidden="true" />
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  variant={pkg.highlighted ? 'primary' : 'glass'}
+                  icon={ArrowRight}
+                  className="package-card__btn"
+                  onClick={() => handlePackageSelect(pkg)}
+                >
+                  Select {pkg.name} Scope
+                </Button>
+              </GlassCard>
+            ))}
+          </div>
         </div>
       </div>
     </section>

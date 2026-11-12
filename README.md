@@ -37,15 +37,15 @@ NexForever/
 ├── src/
 │   ├── components/
 │   │   ├── assistant/
-│   │   │   ├── RobotAssistant.jsx    ← Floating pearl-chrome robot mascot ("Nex")
+│   │   │   ├── RobotAssistant.jsx    ← Floating pearl-chrome robot mascot ("CHITTI")
 │   │   │   ├── AssistantPanel.jsx    ← Glassmorphism local FAQ & navigation drawer
 │   │   │   └── assistantData.js      ← Section prompts & guided studio Q&A data
 │   │   ├── layout/
 │   │   │   ├── Navbar.jsx            ← Floating glass navigation bar & mobile drawer
 │   │   │   └── Footer.jsx            ← Dark minimal footer
 │   │   ├── portfolio/
-│   │   │   ├── ProjectGallery.jsx    ← Filterable grid & intentional empty state
-│   │   │   ├── ProjectCard.jsx       ← 3D-tilt interactive project card
+│   │   │   ├── ProjectGallery.jsx    ← Horizontal drag/swipe/arrow carousel & empty state
+│   │   │   ├── ProjectCard.jsx       ← 3D-tilt interactive project slide card
 │   │   │   └── ProjectModal.jsx      ← Full-screen accessible project detail modal
 │   │   ├── scene/
 │   │   │   ├── SceneBackground.jsx   ← Fullscreen fixed WebGL canvas & fallback
@@ -53,19 +53,20 @@ NexForever/
 │   │   │   └── InfinityGeometry.jsx  ← Parametric 3D lemniscate TubeGeometry
 │   │   ├── sections/
 │   │   │   ├── Hero.jsx              ← Split hero, availability pill & marquee
-│   │   │   ├── About.jsx             ← Editorial studio story & expandable values
+│   │   │   ├── About.jsx             ← Studio narrative, focus areas & expandable values
 │   │   │   ├── Services.jsx          ← Interactive capability cards & enquire routing
 │   │   │   ├── Portfolio.jsx         ← Portfolio section controller
-│   │   │   ├── Approach.jsx          ← Scroll-driven 4-stage interactive timeline
-│   │   │   └── Contact.jsx           ← Editable details & validated enquiry form
+│   │   │   ├── Approach.jsx          ← Scroll-driven 4-stage timeline & Studio FAQ
+│   │   │   └── Contact.jsx           ← Editable details & 3-step Project Inquiry Wizard
 │   │   └── ui/
 │   │       ├── Button.jsx
 │   │       ├── GlassCard.jsx         ← Shared glass surface with pointer 3D tilt
 │   │       └── SectionHeading.jsx
 │   ├── data/
-│   │   ├── config.js                 ← Brand, availability badge, contact & socials
-│   │   ├── projects.js               ← Portfolio project entries & category list
-│   │   └── services.js               ← Services deliverables & scope descriptions
+│   │   ├── config.js                 ← Brand, availability badge, API hooks & contacts
+│   │   ├── projects.js               ← Portfolio entries, categories & backend loader
+│   │   ├── services.js               ← Services, Business/Creator tracks & Launch/Grow/Elevate packages
+│   │   └── testimonials.js           ← Verified client testimonials & optional API loader
 │   ├── hooks/
 │   │   └── useScrollProgress.js      ← Scroll indicator & back-to-top state
 │   ├── styles/

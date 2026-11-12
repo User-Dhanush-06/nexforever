@@ -53,14 +53,15 @@ export default function Hero() {
             <h1 className="hero__title hero-anim">
               Built for
               <br />
-              <span className="accent-mint hero__nowrap">What's Next.</span>
+              <span className="text-outline-mint hero__nowrap">What's Next.</span>
               <br />
               <span className="hero__nowrap">Made to Last.</span>
             </h1>
 
             <p className="hero__description hero-anim">
-              We bring ideas to life through technology, creativity and digital
-              experiences that help businesses move forward.
+              A collaborative creative technology studio uniting web engineering,
+              visual storytelling, brand design and growth strategy for businesses,
+              startups and content creators.
             </p>
 
             <div className="hero__actions hero-anim">

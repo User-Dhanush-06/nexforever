@@ -1,55 +1,61 @@
 /**
- * NexForever — Studio Assistant ("Nex") Local Knowledge & Prompts
+ * NexForever — CHITTI Robot Assistant Knowledge & Section Prompts
  * ─────────────────────────────────────────────────────────────
- * Structured local FAQ and contextual section prompts.
- * NOTE: This uses deterministic local studio guidance (no external AI backend).
+ * Structured local FAQ and contextual section prompts for CHITTI.
+ * NOTE: Uses deterministic local studio guidance (no external AI backend).
  * ─────────────────────────────────────────────────────────────
  */
 
 export const sectionWelcomePrompts = {
-  home: 'Hey! Looking to build something extraordinary?',
-  about: 'Curious how we unite technology and creative storytelling?',
+  home: "Hey! I'm CHITTI. Looking to build something extraordinary?",
+  about: 'Curious how NexForever unites code, design and visual storytelling?',
   services: 'Need a website, creative video or digital branding?',
-  portfolio: 'Want to explore what we can create together?',
-  approach: 'See how we take projects from idea to impact.',
-  contact: 'Ready to start your next project?',
+  portfolio: 'Want to explore our horizontal showcase & upcoming work?',
+  approach: 'See how CHITTI & our studio guide projects from idea to impact.',
+  contact: 'Ready to configure your project enquiry?',
 };
 
 export const assistantSuggestions = [
   {
     id: 'intro',
-    question: 'What is NexForever?',
+    question: 'Who is NexForever?',
     answer:
-      'NexForever is a creative technology studio focused on building digital experiences, developing websites and applications, producing visual content, and helping businesses grow their digital presence.',
-    action: { label: 'About Our Studio', target: '#about' },
+      'NexForever is a small, collaborative creative technology studio combining web development, video production, creative design and digital marketing with flexible, tailored execution.',
+    action: { label: 'About NexForever', target: '#about' },
+  },
+  {
+    id: 'audience',
+    question: 'Who do you work with?',
+    answer:
+      'We serve two primary audiences under one roof: businesses, startups & growing brands building strong market presence, plus content creators & personal brands crafting cohesive platforms and visual stories.',
+    action: { label: 'Explore Solutions', target: '#audience-solutions' },
   },
   {
     id: 'services',
     question: 'What services do you offer?',
     answer:
-      'We specialize in four core areas: Web Development (sites, web apps, dashboards), Video Production & Content Creation, Creative Design & Branding, and Digital Marketing campaigns.',
+      'We focus on four core capabilities: Web Development, Video Production & Content Creation, Creative Design & Branding, and Digital Marketing.',
     action: { label: 'Explore Services', target: '#services' },
   },
   {
-    id: 'work',
-    question: 'Where can I see your work?',
+    id: 'packages',
+    question: 'Tell me about Launch, Grow & Elevate',
     answer:
-      'Our Selected Work archive supports category filters and full interactive project breakdowns. As new studio projects are added, you can inspect images, challenges, solutions and live links right inside the gallery.',
+      'Launch helps new businesses establish a presence, Grow strengthens existing online presence, and Elevate delivers comprehensive brand & platform solutions — all customizable around your real project scope.',
+    action: { label: 'View Packages', target: '#packages' },
+  },
+  {
+    id: 'work',
+    question: 'How does Our Work gallery work?',
+    answer:
+      'Our Work uses an interactive horizontal carousel supporting category filters, drag/swipe navigation and full case-study modal overlays as projects are published.',
     action: { label: 'Go to Our Work', target: '#portfolio' },
   },
   {
-    id: 'process',
-    question: 'How does your workflow operate?',
-    answer:
-      'Every project follows our 4-stage methodology: 01 Discover (goals & requirements), 02 Strategize (architecture & planning), 03 Create (build & production), and 04 Deliver (polished launch).',
-    action: { label: 'View Approach', target: '#approach' },
-  },
-  {
     id: 'contact',
-    question: 'How do we start a project?',
+    question: 'How can I start an enquiry?',
     answer:
-      'Head down to our Contact section to pick the service you need and share your idea, or connect via the studio contact details configured on this site.',
-    action: { label: 'Start a Project', target: '#contact' },
+      'Use our 3-step Project Inquiry Wizard in Contact to pick your audience track, package or service, planning preferences and project brief.',
+    action: { label: 'Open Inquiry Wizard', target: '#contact' },
   },
 ];
-
