@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -12,12 +12,14 @@ import Services from './components/sections/Services';
 import Portfolio from './components/sections/Portfolio';
 import Approach from './components/sections/Approach';
 import Contact from './components/sections/Contact';
+import RobotAssistant from './components/assistant/RobotAssistant';
 import { useScrollProgress } from './hooks/useScrollProgress';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function App() {
   const shellRef = useRef(null);
+  const [selectedService, setSelectedService] = useState('');
   const { progress, showBackToTop, scrollToTop } = useScrollProgress();
 
   // Initialize Lenis smooth scroll & GSAP ScrollTrigger reveals
@@ -43,11 +45,11 @@ export default function App() {
 
     // Scroll-triggered reveals for sections
     const ctx = gsap.context(() => {
-      gsap.utils.toArray('.section-header, .about__text-col, .contact__info').forEach((el) => {
+      gsap.utils.toArray('.section-header, .about__text-col, .contact__info, .about__visual-card').forEach((el) => {
         gsap.from(el, {
-          y: 36,
+          y: 32,
           opacity: 0,
-          duration: 0.9,
+          duration: 0.85,
           ease: 'power3.out',
           clearProps: 'transform,opacity',
           scrollTrigger: {
@@ -61,10 +63,10 @@ export default function App() {
       gsap.utils.toArray('.about__values-grid, .services-grid, .approach__timeline').forEach((grid) => {
         const items = grid.children;
         gsap.from(items, {
-          y: 32,
+          y: 28,
           opacity: 0,
-          duration: 0.85,
-          stagger: 0.12,
+          duration: 0.8,
+          stagger: 0.11,
           ease: 'power3.out',
           clearProps: 'transform,opacity',
           scrollTrigger: {
@@ -95,7 +97,8 @@ export default function App() {
       {/* 3D WebGL Background Scene (Three.js + R3F) */}
       <SceneBackground />
 
-      {/* Cinematic Ambient Overlay */}
+      {/* Fine Architectural Grid + Cinematic Ambient Overlay */}
+      <div className="ambient-grid" aria-hidden="true" />
       <div className="ambient-overlay" aria-hidden="true" />
 
       {/* Main Website Content Layer */}
@@ -105,10 +108,10 @@ export default function App() {
         <main id="main-content">
           <Hero />
           <About />
-          <Services />
+          <Services onEnquireService={setSelectedService} />
           <Portfolio />
           <Approach />
-          <Contact />
+          <Contact preselectedService={selectedService} />
         </main>
 
         <Footer />
@@ -122,6 +125,9 @@ export default function App() {
       >
         <ArrowUp size={18} />
       </button>
+
+      {/* Global Floating NexForever Studio Robot Assistant */}
+      <RobotAssistant />
     </div>
   );
 }

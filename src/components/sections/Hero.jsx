@@ -2,15 +2,18 @@ import React, { useEffect, useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
 import gsap from 'gsap';
 import Button from '../ui/Button';
+import { siteConfig } from '../../data/config';
 
 export default function Hero() {
   const heroRef = useRef(null);
 
-  const capabilities = [
+  const marqueeItems = [
     'Web Development',
     'Video Production',
     'Creative Design',
-    'Digital Marketing'
+    'Digital Marketing',
+    'Brand Identity',
+    'Web Applications',
   ];
 
   useEffect(() => {
@@ -22,7 +25,7 @@ export default function Hero() {
         y: 36,
         opacity: 0,
         duration: 1.0,
-        stagger: 0.14,
+        stagger: 0.13,
         ease: 'power3.out',
         clearProps: 'transform,opacity',
       });
@@ -35,11 +38,15 @@ export default function Hero() {
     <section ref={heroRef} id="home" className="hero-section" aria-label="Hero Introduction">
       <div className="container hero-container">
         <div className="hero__grid">
-          {/* Left Editorial Content */}
+          {/* Left Editorial Content (Dedicated Text Column) */}
           <div className="hero__content">
-            <div className="hero__eyebrow-wrap hero-anim">
+            <div className="hero__eyebrow-row hero-anim">
               <span className="hero__eyebrow">
                 Creative Technology Studio
+              </span>
+              <span className="hero__status-pill">
+                <span className="hero__status-dot" aria-hidden="true" />
+                <span>{siteConfig.brand.availability}</span>
               </span>
             </div>
 
@@ -65,20 +72,24 @@ export default function Hero() {
               </Button>
             </div>
 
-            {/* Service Capability Strip */}
-            <div className="hero__capabilities hero-anim" aria-label="Core Capabilities">
-              {capabilities.map((cap, i) => (
-                <React.Fragment key={cap}>
-                  <span className="hero__cap-item">{cap}</span>
-                  {i < capabilities.length - 1 && (
-                    <span className="hero__cap-separator" aria-hidden="true">·</span>
-                  )}
-                </React.Fragment>
-              ))}
+            {/* Moving Services Marquee Ticker */}
+            <div className="hero__marquee hero-anim" aria-label="Core Capabilities">
+              <div className="hero__marquee-track">
+                {[...marqueeItems, ...marqueeItems].map((item, idx) => (
+                  <span
+                    key={`${item}-${idx}`}
+                    className="hero__marquee-item"
+                    aria-hidden={idx >= marqueeItems.length}
+                  >
+                    <span className="hero__marquee-dot" aria-hidden="true" />
+                    <span>{item}</span>
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Right Visual Area: Space allowing the 3D infinity sculpture to breathe */}
+          {/* Right Visual Stage: Dedicated space for 3D Chrome Infinity Sculpture */}
           <div className="hero__visual" aria-hidden="true" />
         </div>
 

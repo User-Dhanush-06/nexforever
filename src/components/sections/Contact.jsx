@@ -1,11 +1,21 @@
-import React, { useState } from 'react';
-import { Mail, MessageSquare, Instagram, MapPin, Send, AlertCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import {
+  Mail,
+  MessageSquare,
+  Instagram,
+  MapPin,
+  Send,
+  AlertCircle,
+  Loader2,
+  CheckCircle2,
+} from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
 import GlassCard from '../ui/GlassCard';
 import Button from '../ui/Button';
 import { siteConfig } from '../../data/config';
+import { servicesData } from '../../data/services';
 
-export default function Contact() {
+export default function Contact({ preselectedService = '' }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,47 +24,95 @@ export default function Contact() {
   });
 
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
 
-  const isEmailConfigured = siteConfig.contact.email && !siteConfig.contact.email.startsWith('[');
-
-  const validate = () => {
-    const errs = {};
-    if (!formData.name.trim()) errs.name = 'Please enter your name.';
-    if (!formData.email.trim()) {
-      errs.email = 'Please enter your email address.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      errs.email = 'Please enter a valid email address.';
+  // Sync preselected service when user clicks "Enquire" from Services section
+  useEffect(() => {
+    if (preselectedService) {
+      setFormData((prev) => ({ ...prev, service: preselectedService }));
     }
-    if (!formData.message.trim()) errs.message = 'Please enter a message.';
+  }, [preselectedService]);
+
+  const isEmailConfigured =
+    siteConfig.contact.email && !siteConfig.contact.email.startsWith('[');
+  const isWhatsappConfigured =
+    siteConfig.contact.whatsapp && !siteConfig.contact.whatsapp.startsWith('[');
+  const isInstagramConfigured =
+    siteConfig.contact.instagram && !siteConfig.contact.instagram.startsWith('[');
+
+  const validateField = (field, value) => {
+    if (field === 'name' && !value.trim()) return 'Please enter your name.';
+    if (field === 'email') {
+      if (!value.trim()) return 'Please enter your email address.';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
+        return 'Please enter a valid email address.';
+      }
+    }
+    if (field === 'message' && !value.trim()) return 'Please enter a message.';
+    return '';
+  };
+
+  const validateAll = () => {
+    const errs = {};
+    ['name', 'email', 'message'].forEach((field) => {
+      const msg = validateField(field, formData[field]);
+      if (msg) errs[field] = msg;
+    });
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
+  const handleFieldChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      const nextErr = validateField(field, value);
+      setErrors((prev) => {
+        const copy = { ...prev };
+        if (nextErr) copy[field] = nextErr;
+        else delete copy[field];
+        return copy;
+      });
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    setStatusMessage(null);
+    if (!validateAll()) return;
 
-    if (!isEmailConfigured) {
+    const completeSubmission = () => {
+      setIsSubmitting(false);
+      if (!isEmailConfigured) {
+        setStatusMessage({
+          type: 'warning',
+          text: 'Direct email dispatch requires configuring your email in src/data/config.js. Your enquiry details were validated locally.',
+        });
+        return;
+      }
+
+      const subject = encodeURIComponent(
+        `NexForever Enquiry from ${formData.name}${formData.service ? ` (${formData.service})` : ''}`
+      );
+      const body = encodeURIComponent(
+        `Name: ${formData.name}\nEmail: ${formData.email}\nService: ${formData.service || 'General Enquiry'}\n\nMessage:\n${formData.message}`
+      );
+
+      window.location.href = `mailto:${siteConfig.contact.email}?subject=${subject}&body=${body}`;
       setStatusMessage({
-        type: 'warning',
-        text: 'The contact form is not yet configured. Add your email address in src/data/config.js to activate mailto submissions.'
+        type: 'success',
+        text: 'Validation passed — opening your default email client to complete and send your enquiry.',
       });
+    };
+
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) {
+      completeSubmission();
       return;
     }
 
-    const subject = encodeURIComponent(
-      `NexForever Enquiry from ${formData.name}${formData.service ? ` (${formData.service})` : ''}`
-    );
-    const body = encodeURIComponent(
-      `Name: ${formData.name}\nEmail: ${formData.email}\nService: ${formData.service || 'General Enquiry'}\n\nMessage:\n${formData.message}`
-    );
-
-    window.location.href = `mailto:${siteConfig.contact.email}?subject=${subject}&body=${body}`;
-    setStatusMessage({
-      type: 'success',
-      text: 'Opening your default email client to complete your message.'
-    });
+    setIsSubmitting(true);
+    setTimeout(completeSubmission, 360);
   };
 
   return (
@@ -76,12 +134,18 @@ export default function Contact() {
                 </div>
                 <div>
                   <span className="contact__item-label">Email</span>
-                  <a
-                    href={isEmailConfigured ? `mailto:${siteConfig.contact.email}` : '#'}
-                    className="contact__item-val"
-                  >
-                    {siteConfig.contact.email}
-                  </a>
+                  {isEmailConfigured ? (
+                    <a
+                      href={`mailto:${siteConfig.contact.email}`}
+                      className="contact__item-val"
+                    >
+                      {siteConfig.contact.email}
+                    </a>
+                  ) : (
+                    <span className="contact__item-val contact__item-val--placeholder">
+                      {siteConfig.contact.email}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -91,7 +155,9 @@ export default function Contact() {
                 </div>
                 <div>
                   <span className="contact__item-label">WhatsApp</span>
-                  <span className="contact__item-val">
+                  <span
+                    className={`contact__item-val ${!isWhatsappConfigured ? 'contact__item-val--placeholder' : ''}`}
+                  >
                     {siteConfig.contact.whatsapp}
                   </span>
                 </div>
@@ -103,9 +169,20 @@ export default function Contact() {
                 </div>
                 <div>
                   <span className="contact__item-label">Instagram</span>
-                  <span className="contact__item-val">
-                    {siteConfig.contact.instagram}
-                  </span>
+                  {isInstagramConfigured ? (
+                    <a
+                      href={siteConfig.contact.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="contact__item-val"
+                    >
+                      {siteConfig.contact.instagram}
+                    </a>
+                  ) : (
+                    <span className="contact__item-val contact__item-val--placeholder">
+                      {siteConfig.contact.instagram}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -129,7 +206,7 @@ export default function Contact() {
               <div className="contact__notice" role="alert">
                 <AlertCircle size={16} className="contact__notice-icon" />
                 <span>
-                  <strong>Setup required:</strong> Add your email in <code>src/data/config.js</code> to activate direct submissions.
+                  <strong>Setup required:</strong> Add your email in <code>src/data/config.js</code> to activate direct mailto submissions.
                 </span>
               </div>
             )}
@@ -146,7 +223,8 @@ export default function Contact() {
                     className="form-input"
                     placeholder="Your name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    aria-invalid={Boolean(errors.name)}
+                    onChange={(e) => handleFieldChange('name', e.target.value)}
                   />
                   {errors.name && <span className="form-error">{errors.name}</span>}
                 </div>
@@ -161,7 +239,8 @@ export default function Contact() {
                     className="form-input"
                     placeholder="your@email.com"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    aria-invalid={Boolean(errors.email)}
+                    onChange={(e) => handleFieldChange('email', e.target.value)}
                   />
                   {errors.email && <span className="form-error">{errors.email}</span>}
                 </div>
@@ -175,13 +254,14 @@ export default function Contact() {
                   id="contact-service"
                   className="form-select"
                   value={formData.service}
-                  onChange={(e) => setFormData({ ...formData, service: e.target.value })}
+                  onChange={(e) => handleFieldChange('service', e.target.value)}
                 >
                   <option value="">Select a service (optional)</option>
-                  <option value="Web Development">Web Development</option>
-                  <option value="Video Production & Content Creation">Video Production & Content Creation</option>
-                  <option value="Creative Design & Branding">Creative Design & Branding</option>
-                  <option value="Digital Marketing">Digital Marketing</option>
+                  {servicesData.map((svc) => (
+                    <option key={svc.number} value={svc.title}>
+                      {svc.title}
+                    </option>
+                  ))}
                   <option value="Other / General Enquiry">Other / General Enquiry</option>
                 </select>
               </div>
@@ -196,13 +276,20 @@ export default function Contact() {
                   rows={5}
                   placeholder="Tell us about your project or idea..."
                   value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  aria-invalid={Boolean(errors.message)}
+                  onChange={(e) => handleFieldChange('message', e.target.value)}
                 />
                 {errors.message && <span className="form-error">{errors.message}</span>}
               </div>
 
-              <Button type="submit" variant="primary" icon={Send} className="btn-submit">
-                Send Message
+              <Button
+                type="submit"
+                variant="primary"
+                icon={isSubmitting ? Loader2 : Send}
+                className={`btn-submit ${isSubmitting ? 'btn-submit--loading' : ''}`}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Preparing Message...' : 'Send Message'}
               </Button>
 
               {statusMessage && (
@@ -210,7 +297,12 @@ export default function Contact() {
                   className={`contact__status contact__status--${statusMessage.type}`}
                   role="status"
                 >
-                  {statusMessage.text}
+                  {statusMessage.type === 'success' ? (
+                    <CheckCircle2 size={16} aria-hidden="true" />
+                  ) : (
+                    <AlertCircle size={16} aria-hidden="true" />
+                  )}
+                  <span>{statusMessage.text}</span>
                 </div>
               )}
             </form>

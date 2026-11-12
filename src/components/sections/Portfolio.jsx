@@ -1,92 +1,83 @@
 import React, { useState } from 'react';
-import { Image as ImageIcon, ArrowUpRight, FolderGit2 } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
-import GlassCard from '../ui/GlassCard';
+import ProjectGallery from '../portfolio/ProjectGallery';
+import ProjectModal from '../portfolio/ProjectModal';
 import { projectsData, portfolioCategories } from '../../data/projects';
 
 export default function Portfolio() {
   const [activeCategory, setActiveCategory] = useState('All');
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
 
-  const filteredProjects = activeCategory === 'All'
-    ? projectsData
-    : projectsData.filter((p) => p.category === activeCategory);
+  const filteredProjects =
+    activeCategory === 'All'
+      ? projectsData
+      : projectsData.filter((p) => p.category === activeCategory);
+
+  const selectedIndex = filteredProjects.findIndex((p) => p.id === selectedProjectId);
+  const selectedProject = selectedIndex >= 0 ? filteredProjects[selectedIndex] : null;
+
+  const handlePrev = () => {
+    if (filteredProjects.length <= 1) return;
+    const prevIdx = (selectedIndex - 1 + filteredProjects.length) % filteredProjects.length;
+    setSelectedProjectId(filteredProjects[prevIdx].id);
+  };
+
+  const handleNext = () => {
+    if (filteredProjects.length <= 1) return;
+    const nextIdx = (selectedIndex + 1) % filteredProjects.length;
+    setSelectedProjectId(filteredProjects[nextIdx].id);
+  };
 
   return (
-    <section id="portfolio" className="section portfolio-section" aria-label="Portfolio Selected Work">
+    <section
+      id="portfolio"
+      className="section portfolio-section"
+      aria-label="Portfolio Selected Work"
+    >
       <div className="container">
         <SectionHeading
           eyebrow="Our Work"
           title="Selected Work."
-          subtitle="A collection of projects, ideas and digital experiences."
+          subtitle="A curated archive of digital platforms, creative productions, brand systems and campaigns."
         />
 
         {/* Category Filter Buttons */}
         <div className="portfolio__filters" role="group" aria-label="Filter Projects">
-          {portfolioCategories.map((cat) => (
-            <button
-              key={cat}
-              className={`portfolio__filter-btn ${activeCategory === cat ? 'portfolio__filter-btn--active' : ''}`}
-              onClick={() => setActiveCategory(cat)}
-            >
-              {cat}
-            </button>
-          ))}
+          {portfolioCategories.map((cat) => {
+            const count =
+              cat === 'All'
+                ? projectsData.length
+                : projectsData.filter((p) => p.category === cat).length;
+            return (
+              <button
+                key={cat}
+                type="button"
+                className={`portfolio__filter-btn ${activeCategory === cat ? 'portfolio__filter-btn--active' : ''}`}
+                onClick={() => setActiveCategory(cat)}
+              >
+                <span>{cat}</span>
+                {projectsData.length > 0 && (
+                  <span className="portfolio__filter-count">{count}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Project Grid or Elegant Empty State */}
-        {filteredProjects.length === 0 ? (
-          <GlassCard className="portfolio__empty-state" hoverEffect={false}>
-            <div className="portfolio__empty-icon" aria-hidden="true">
-              <FolderGit2 size={44} />
-            </div>
-            <h3 className="portfolio__empty-title">
-              {activeCategory === 'All' ? 'Projects Coming Soon' : `No ${activeCategory} Projects Yet`}
-            </h3>
-            <p className="portfolio__empty-text">
-              {activeCategory === 'All'
-                ? 'Portfolio projects will appear here once added. Edit src/data/projects.js to showcase your work.'
-                : `${activeCategory} projects will appear here once added.`}
-            </p>
-          </GlassCard>
-        ) : (
-          <div className="portfolio__grid">
-            {filteredProjects.map((project) => (
-              <GlassCard key={project.id} className="project-card">
-                <div className="project-card__thumb">
-                  {project.image ? (
-                    <img
-                      src={project.image}
-                      alt={project.title}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="project-card__placeholder">
-                      <ImageIcon size={36} />
-                    </div>
-                  )}
-                </div>
-                <div className="project-card__info">
-                  <span className="project-card__category">{project.category}</span>
-                  <h4 className="project-card__title">{project.title}</h4>
-                  <p className="project-card__desc">{project.description}</p>
-                  {project.link && project.link !== '#' && (
-                    <a
-                      href={project.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="project-card__link"
-                    >
-                      <span>View Project</span>
-                      <ArrowUpRight size={14} />
-                    </a>
-                  )}
-                </div>
-              </GlassCard>
-            ))}
-          </div>
-        )}
+        <ProjectGallery
+          projects={filteredProjects}
+          activeCategory={activeCategory}
+          onSelectProject={(proj) => setSelectedProjectId(proj.id)}
+        />
       </div>
+
+      <ProjectModal
+        project={selectedProject}
+        onClose={() => setSelectedProjectId(null)}
+        onPrev={handlePrev}
+        onNext={handleNext}
+        hasMultiple={filteredProjects.length > 1}
+      />
     </section>
   );
 }
-

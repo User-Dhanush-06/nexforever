@@ -46,10 +46,10 @@
 
   .approach__timeline {
     grid-template-columns: repeat(2, 1fr);
-    gap: 3rem 2rem;
+    gap: 2.5rem 2rem;
   }
 
-  .approach__timeline::before {
+  .approach__track {
     display: none;
   }
 
@@ -123,33 +123,34 @@
 
   .approach__timeline {
     grid-template-columns: 1fr;
-    gap: 2.5rem;
+    gap: 1.75rem;
     position: relative;
-    padding-left: 1.5rem;
+    padding-left: 0.75rem;
   }
 
-  .approach__timeline::before {
+  .approach__track {
     display: block;
-    top: 28px;
-    bottom: 28px;
+    top: 32px;
+    bottom: 32px;
     left: 42px;
     right: auto;
-    width: 1px;
+    width: 2px;
     height: auto;
-    background: linear-gradient(
-      to bottom,
-      transparent,
-      var(--glass-border) 10%,
-      var(--glass-border) 90%,
-      transparent
-    );
+  }
+
+  .approach__track-fill {
+    width: 100%;
+    height: var(--timeline-progress, 25%);
+    background: linear-gradient(180deg, rgba(105, 229, 193, 0.4), var(--mint));
+    transition: height 120ms linear;
   }
 
   .approach__step {
     flex-direction: row;
     align-items: flex-start;
     text-align: left;
-    gap: 1.5rem;
+    gap: 1.25rem;
+    padding: 0.5rem;
   }
 
   .approach__node {
@@ -157,8 +158,23 @@
     flex-shrink: 0;
   }
 
-  .approach__text {
+  .approach__text,
+  .approach__focus {
     max-width: 100%;
+  }
+
+  .portfolio__blueprint-row,
+  .project-modal__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .project-modal-backdrop {
+    padding: 0.85rem;
+  }
+
+  .project-modal__topbar,
+  .project-modal__body {
+    padding: 1.25rem;
   }
 
   .footer__grid {
@@ -222,18 +238,24 @@
     display: none;
   }
 
-  .hero__capabilities {
-    font-size: 0.72rem;
-    gap: 0.35rem 0.45rem;
+  .hero__marquee {
+    max-width: 100%;
   }
 
   .contact__form-card {
-    padding: 2rem 1.5rem;
+    padding: 2rem 1.35rem;
   }
 
-  .service-card,
-  .value-card {
-    padding: 2rem 1.5rem;
+  .service-card {
+    padding: 2rem 1.45rem;
+  }
+
+  .value-card__trigger {
+    padding: 1.75rem 1.45rem;
+  }
+
+  .portfolio__empty-state {
+    padding: 2.75rem 1.25rem;
   }
 
   .portfolio__grid {
@@ -250,13 +272,37 @@
     padding-left: 0;
   }
 
-  .approach__timeline::before {
-    left: 27px;
+  .approach__track {
+    left: 38px;
+  }
+
+  .robot-assistant-root {
+    bottom: 1rem;
+    right: 1rem;
+  }
+
+  .robot-trigger {
+    width: 54px;
+    height: 54px;
+  }
+
+  .robot-svg {
+    width: 44px;
+    height: 44px;
+  }
+
+  .robot-bubble {
+    max-width: min(230px, calc(100vw - 2rem));
+  }
+
+  .assistant-panel {
+    width: calc(100vw - 2rem);
+    max-height: min(460px, calc(100vh - 110px));
   }
 
   .back-to-top-btn {
-    bottom: 1.25rem;
-    right: 1.25rem;
+    bottom: 5.25rem;
+    right: 1.3rem;
     width: 38px;
     height: 38px;
   }
@@ -290,5 +336,12 @@
 
   .hero__scroll-line {
     height: 24px;
+  }
+}
+
+/* Disable pointer-driven tilt hover sheen on pure touch devices */
+@media (hover: none) {
+  .glass-card--tilt::before {
+    display: none;
   }
 }

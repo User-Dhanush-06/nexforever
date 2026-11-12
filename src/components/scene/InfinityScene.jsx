@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useInfinityGeometry } from './InfinityGeometry';
@@ -6,6 +6,7 @@ import { useInfinityGeometry } from './InfinityGeometry';
 export default function InfinityScene() {
   const meshRef = useRef();
   const groupRef = useRef();
+  const particlesRef = useRef();
   const mintLightRef = useRef();
   const pointerRef = useRef({ x: 0, y: 0 });
   const { gl, scene, size, viewport } = useThree();
@@ -105,6 +106,29 @@ export default function InfinityScene() {
     }
   }, [gl, scene]);
 
+  // Subtle lightweight atmospheric dust particles around the 3D centerpiece
+  const particleGeometry = useMemo(() => {
+    const count = isMobile ? 36 : 72;
+    const positions = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      // Deterministic golden-angle spread so layout is clean and repeatable
+      const angle = i * 2.39996;
+      const radius = 2.6 + ((i * 7) % 19) * 0.14;
+      positions[i * 3] = Math.cos(angle) * radius;
+      positions[i * 3 + 1] = (((i * 13) % 23) / 23 - 0.5) * 4.2;
+      positions[i * 3 + 2] = Math.sin(angle) * radius * 0.65 - 0.6;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    return geo;
+  }, [isMobile]);
+
+  useEffect(() => {
+    return () => {
+      particleGeometry.dispose();
+    };
+  }, [particleGeometry]);
+
   // Balanced figure-8 dimensions
   const geometry = useInfinityGeometry({
     scaleX: 2.3,
@@ -179,6 +203,11 @@ export default function InfinityScene() {
     // Gentle floating motion
     meshRef.current.position.y = Math.sin(time * 0.65) * 0.08;
 
+    if (particlesRef.current) {
+      particlesRef.current.rotation.y = time * 0.035;
+      particlesRef.current.rotation.x = Math.sin(time * 0.08) * 0.04;
+    }
+
     // Smoothly damp group position with slight mouse shift
     groupRef.current.position.x = THREE.MathUtils.lerp(
       groupRef.current.position.x,
@@ -226,6 +255,17 @@ export default function InfinityScene() {
             envMapIntensity={1.85}
           />
         </mesh>
+
+        <points ref={particlesRef} geometry={particleGeometry}>
+          <pointsMaterial
+            color="#69E5C1"
+            size={isMobile ? 0.035 : 0.028}
+            transparent
+            opacity={0.45}
+            sizeAttenuation
+            depthWrite={false}
+          />
+        </points>
       </group>
     </>
   );
