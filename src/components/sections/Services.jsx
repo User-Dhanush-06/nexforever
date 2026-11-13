@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Code2,
   Video,
@@ -10,15 +10,17 @@ import {
   UserCheck,
   Check,
   SlidersHorizontal,
+  RefreshCw,
 } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
 import GlassCard from '../ui/GlassCard';
 import Button from '../ui/Button';
 import {
-  servicesData,
+  servicesData as fallbackServices,
   audienceSolutionsData,
   packagesData,
 } from '../../data/services';
+import { fetchServices } from '../../services/apiClient';
 
 const iconMap = {
   Code2,
@@ -32,7 +34,45 @@ export default function Services({
   onSelectAudience,
   onSelectPackage,
 }) {
+  const [services, setServices] = useState(fallbackServices);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [expandedService, setExpandedService] = useState('01');
+
+  const loadBackendServices = async (signal) => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const data = await fetchServices({ signal });
+      if (Array.isArray(data) && data.length > 0) {
+        // Map backend DTO to component format
+        const mapped = data.map((item) => ({
+          number: item.serviceNumber || '01',
+          slug: item.slug,
+          title: item.title,
+          tag: item.tag,
+          description: item.description,
+          details: item.details,
+          items: Array.isArray(item.items) ? item.items : [],
+          icon: item.icon || 'Code2',
+        }));
+        setServices(mapped);
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        // Soft fallback to packaged services data
+        setLoadError('Connecting to live studio services. Displaying cached baseline.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadBackendServices(controller.signal);
+    return () => controller.abort();
+  }, []);
 
   const scrollToContact = () => {
     const contactEl = document.getElementById('contact');
@@ -68,8 +108,22 @@ export default function Services({
           subtitle="Creative thinking meets technical execution. Explore our core capabilities and tap any card for deeper scope."
         />
 
+        {loadError && (
+          <div className="status-notice status-notice--subtle" role="status">
+            <span>{loadError}</span>
+            <button
+              type="button"
+              className="status-notice__retry"
+              onClick={() => loadBackendServices()}
+            >
+              <RefreshCw size={13} aria-hidden="true" />
+              <span>Retry</span>
+            </button>
+          </div>
+        )}
+
         <div className="services-grid">
-          {servicesData.map((svc) => {
+          {services.map((svc) => {
             const Icon = iconMap[svc.icon] || Code2;
             const isExpanded = expandedService === svc.number;
 

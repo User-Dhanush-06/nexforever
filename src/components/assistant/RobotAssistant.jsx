@@ -1,9 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import AssistantPanel from './AssistantPanel';
-import { sectionWelcomePrompts } from './assistantData';
+import {
+  chittiWelcomeGreetings,
+  sectionWelcomePrompts,
+  sectionSuggestions,
+  companionResponses,
+} from './assistantData';
+import { sendChittiMessage } from '../../services/apiClient';
 
 const DISMISS_STORAGE_KEY = 'nexforever_chitti_bubble_dismissed';
+const CHAT_STORAGE_KEY = 'nexforever_chitti_history';
 
 export default function RobotAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,14 +23,37 @@ export default function RobotAssistant() {
     }
   });
   const [isTyping, setIsTyping] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      id: 'chitti-welcome-init',
-      sender: 'bot',
-      text: "Hey! I'm CHITTI, NexForever's futuristic studio guide. Ask me about our services, portfolio showcase, workflow or starting a project.",
-      action: { label: 'Explore Services', target: '#services' },
-    },
-  ]);
+  const [suggestions, setSuggestions] = useState(sectionSuggestions.home);
+  const [modeInfo, setModeInfo] = useState({ aiConfigured: false, label: 'Studio Companion (Offline Safe)' });
+  const [messages, setMessages] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(CHAT_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // Fallback
+    }
+    const greeting = chittiWelcomeGreetings[Math.floor(Math.random() * chittiWelcomeGreetings.length)];
+    return [
+      {
+        id: 'chitti-welcome-init',
+        sender: 'bot',
+        text: greeting,
+        action: { label: 'Explore Services', target: '#services' },
+      },
+    ];
+  });
+
+  // Persist conversation across the active browser session
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [messages]);
 
   const typingTimerRef = useRef(null);
   const followerRef = useRef(null);
@@ -49,6 +79,13 @@ export default function RobotAssistant() {
     sections.forEach((sec) => observer.observe(sec));
     return () => observer.disconnect();
   }, []);
+
+  // Update contextual companion suggestions as visitor explores different sections
+  useEffect(() => {
+    if (sectionSuggestions[activeSection]) {
+      setSuggestions(sectionSuggestions[activeSection]);
+    }
+  }, [activeSection]);
 
   // Bounded spring-like mouse follow & gaze tracking via requestAnimationFrame
   useEffect(() => {
@@ -150,41 +187,76 @@ export default function RobotAssistant() {
     });
   };
 
-  const handleSelectSuggestion = (item) => {
+  const dispatchChittiQuery = async ({ userText, questionId = null, fallbackItem = null }) => {
     if (isTyping) return;
 
     setMessages((prev) => [
       ...prev,
-      { id: `user-${Date.now()}`, sender: 'user', text: item.question },
+      { id: `user-${Date.now()}`, sender: 'user', text: userText },
     ]);
 
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReduced) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `chitti-${Date.now() + 1}`,
-          sender: 'bot',
-          text: item.answer,
-          action: item.action,
-        },
-      ]);
-      return;
-    }
-
     setIsTyping(true);
-    typingTimerRef.current = setTimeout(() => {
-      setIsTyping(false);
+    const localFallback = (questionId && companionResponses[questionId]) || fallbackItem;
+
+    try {
+      const response = await sendChittiMessage({
+        message: userText,
+        questionId,
+        activeSection,
+      });
+
+      if (response && typeof response.aiConfigured === 'boolean') {
+        setModeInfo({
+          aiConfigured: response.aiConfigured,
+          label: response.providerName || 'Studio Companion (Offline Safe)',
+        });
+      }
+      if (Array.isArray(response?.suggestions) && response.suggestions.length > 0) {
+        setSuggestions(response.suggestions);
+      }
+
       setMessages((prev) => [
         ...prev,
         {
           id: `chitti-${Date.now() + 1}`,
           sender: 'bot',
-          text: item.answer,
-          action: item.action,
+          text: response?.reply || localFallback?.reply || localFallback?.answer || "I'm right here with you! Let's explore how NexForever can help build your idea.",
+          action: response?.action || localFallback?.action || null,
         },
       ]);
-    }, 420);
+    } catch {
+      const offlineText =
+        localFallback?.reply ||
+        localFallback?.answer ||
+        "I'm right here with you! You can explore our Services, Our Work gallery, or reach our team directly using the Project Inquiry Wizard.";
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `chitti-${Date.now() + 1}`,
+          sender: 'bot',
+          text: offlineText,
+          action: localFallback?.action || { label: 'Open Inquiry Wizard', target: '#contact' },
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleSelectSuggestion = (item) => {
+    dispatchChittiQuery({
+      userText: item.question,
+      questionId: item.id,
+      fallbackItem: item,
+    });
+  };
+
+  const handleSendMessage = (text) => {
+    dispatchChittiQuery({
+      userText: text,
+      questionId: null,
+      fallbackItem: null,
+    });
   };
 
   const handleNavigate = (targetSelector) => {
@@ -210,7 +282,10 @@ export default function RobotAssistant() {
         messages={messages}
         isTyping={isTyping}
         onSelectSuggestion={handleSelectSuggestion}
+        onSendMessage={handleSendMessage}
         onNavigate={handleNavigate}
+        suggestions={suggestions}
+        modeInfo={modeInfo}
       />
 
       {/* Contextual Welcome Speech Bubble */}
@@ -337,8 +412,8 @@ export default function RobotAssistant() {
 
             {/* Cursor-Tracking Mint-Green Glowing Eyes & Smile */}
             <g className="robot-svg__face">
-              <rect x="30.5" y="34.5" width="7" height="9" rx="3.5" fill="#69E5C1" className="robot-svg__eye" />
-              <rect x="50.5" y="34.5" width="7" height="9" rx="3.5" fill="#69E5C1" className="robot-svg__eye" />
+              <rect x="30.5" y="34.5" width="7" height="9" rx="3.5" fill="#69E5C1" className="robot-svg__eye robot-svg__eye--animated" />
+              <rect x="50.5" y="34.5" width="7" height="9" rx="3.5" fill="#69E5C1" className="robot-svg__eye robot-svg__eye--animated" />
               <circle cx="32.5" cy="36.8" r="1.1" fill="#FFFFFF" opacity="0.85" />
               <circle cx="52.5" cy="36.8" r="1.1" fill="#FFFFFF" opacity="0.85" />
               <path

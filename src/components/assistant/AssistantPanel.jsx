@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import { X, ArrowRight, Sparkles } from 'lucide-react';
-import { assistantSuggestions } from './assistantData';
+import React, { useEffect, useRef, useState } from 'react';
+import { X, ArrowRight, Sparkles, Send, Compass, Minus } from 'lucide-react';
+import { sectionSuggestions } from './assistantData';
 
 export default function AssistantPanel({
   isOpen,
@@ -8,13 +8,21 @@ export default function AssistantPanel({
   messages,
   isTyping,
   onSelectSuggestion,
+  onSendMessage,
   onNavigate,
+  suggestions = sectionSuggestions.home,
+  modeInfo = { aiConfigured: false, label: 'Studio Companion (Offline-Safe)' },
 }) {
   const scrollRef = useRef(null);
+  const [inputText, setInputText] = useState('');
 
+  // Smoothly scroll to bottom on new messages or typing state changes
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
     }
   }, [messages, isTyping, isOpen]);
 
@@ -27,12 +35,22 @@ export default function AssistantPanel({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const trimmed = inputText.trim();
+    if (!trimmed || isTyping) return;
+    setInputText('');
+    if (onSendMessage) {
+      onSendMessage(trimmed);
+    }
+  };
+
   return (
     <div
       className={`assistant-panel ${isOpen ? 'assistant-panel--open' : ''}`}
       role="dialog"
       aria-modal="false"
-      aria-label="CHITTI Studio Assistant"
+      aria-label="CHITTI Studio Companion"
       aria-hidden={!isOpen}
     >
       {/* Panel Header */}
@@ -40,20 +58,36 @@ export default function AssistantPanel({
         <div className="assistant-panel__identity">
           <span className="assistant-panel__dot" aria-hidden="true" />
           <div>
-            <h3 className="assistant-panel__title">CHITTI</h3>
+            <div className="assistant-panel__title-row">
+              <h3 className="assistant-panel__title">CHITTI</h3>
+              <span className="assistant-panel__pill">Studio Companion</span>
+            </div>
             <span className="assistant-panel__subtitle">
-              <Sparkles size={11} aria-hidden="true" /> NexForever Assistant
+              <Sparkles size={11} aria-hidden="true" />{' '}
+              {modeInfo.aiConfigured ? 'AI Companion' : 'Studio Knowledge (Offline Safe)'}
             </span>
           </div>
         </div>
-        <button
-          type="button"
-          className="assistant-panel__close"
-          onClick={onClose}
-          aria-label="Close CHITTI Assistant"
-        >
-          <X size={17} />
-        </button>
+        <div className="assistant-panel__actions-head">
+          <button
+            type="button"
+            className="assistant-panel__ctrl-btn"
+            onClick={onClose}
+            aria-label="Minimize CHITTI Companion"
+            title="Minimize"
+          >
+            <Minus size={15} />
+          </button>
+          <button
+            type="button"
+            className="assistant-panel__close"
+            onClick={onClose}
+            aria-label="Close CHITTI Companion"
+            title="Close"
+          >
+            <X size={17} />
+          </button>
+        </div>
       </div>
 
       {/* Chat Conversation Stream */}
@@ -89,15 +123,20 @@ export default function AssistantPanel({
         )}
       </div>
 
-      {/* Suggested Question Chips */}
+      {/* Compact Contextual Suggestion Pills */}
       <div className="assistant-panel__suggestions">
-        <span className="assistant-panel__prompt-label">Suggested Questions</span>
-        <div className="assistant-panel__chips">
-          {assistantSuggestions.map((item) => (
+        <div className="assistant-panel__prompt-row">
+          <span className="assistant-panel__prompt-label">
+            <Compass size={11} aria-hidden="true" />
+            <span>Quick Suggestions</span>
+          </span>
+        </div>
+        <div className="assistant-panel__chips assistant-panel__chips--wrap">
+          {(suggestions && suggestions.length > 0 ? suggestions : sectionSuggestions.home).map((item) => (
             <button
               key={item.id}
               type="button"
-              className="assistant-chip"
+              className="assistant-chip assistant-chip--wrap"
               onClick={() => onSelectSuggestion(item)}
               disabled={isTyping}
             >
@@ -106,6 +145,28 @@ export default function AssistantPanel({
           ))}
         </div>
       </div>
+
+      {/* Interactive Question Input */}
+      <form className="assistant-panel__form" onSubmit={handleSubmit}>
+        <input
+          type="text"
+          className="assistant-panel__input"
+          placeholder="Ask Chitti about services, packages, work..."
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          aria-label="Ask CHITTI a question"
+          disabled={isTyping}
+          maxLength={300}
+        />
+        <button
+          type="submit"
+          className="assistant-panel__send"
+          disabled={isTyping || !inputText.trim()}
+          aria-label="Send message to CHITTI"
+        >
+          <Send size={15} aria-hidden="true" />
+        </button>
+      </form>
     </div>
   );
 }

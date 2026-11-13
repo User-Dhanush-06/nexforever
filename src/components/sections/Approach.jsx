@@ -1,12 +1,38 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Compass, Layers, Cpu, Rocket, ChevronDown } from 'lucide-react';
+import { Compass, Layers, Cpu, Rocket, ChevronDown, RefreshCw } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
+import { fetchFaqs } from '../../services/apiClient';
+
+const fallbackFaqs = [
+  {
+    id: 'fallback-1',
+    question: 'How do we kick off a new project with NexForever?',
+    answer: 'Start using the Project Inquiry Wizard in our Contact section. Once you share your service needs, planning scope and project idea, we review requirements together during the Discover stage.',
+  },
+  {
+    id: 'fallback-2',
+    question: 'Can we combine multiple studio services or customize Launch, Grow & Elevate?',
+    answer: 'Yes. Launch, Grow and Elevate act as flexible starting points — never rigid subscriptions — allowing you to combine Web Development, Video Production, Creative Design and Digital Marketing around your real goals.',
+  },
+  {
+    id: 'fallback-3',
+    question: 'How are scope, investment and schedule determined?',
+    answer: 'Every project is scoped transparently around your objectives and deliverables during Strategize, rather than relying on one-size-fits-all templates or fixed assumptions.',
+  },
+  {
+    id: 'fallback-4',
+    question: 'Do you support responsive websites and interactive visual experiences?',
+    answer: 'Every digital experience we engineer is built mobile-first, tested across modern screen sizes and crafted with accessibility and smooth performance in mind.',
+  },
+];
 
 export default function Approach() {
   const sectionRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0.25);
   const [activeStep, setActiveStep] = useState(0);
   const [openFaq, setOpenFaq] = useState(0);
+  const [faqs, setFaqs] = useState(fallbackFaqs);
+  const [faqError, setFaqError] = useState(null);
 
   const steps = [
     {
@@ -39,24 +65,25 @@ export default function Approach() {
     },
   ];
 
-  const faqs = [
-    {
-      q: 'How do we kick off a new project with NexForever?',
-      a: 'Start using the Project Inquiry Wizard in our Contact section. Once you share your service needs, planning scope and project idea, we review requirements together during the Discover stage.',
-    },
-    {
-      q: 'Can we combine multiple studio services or customize Launch, Grow & Elevate?',
-      a: 'Yes. Launch, Grow and Elevate act as flexible starting points — never rigid subscriptions — allowing you to combine Web Development, Video Production, Creative Design and Digital Marketing around your real goals.',
-    },
-    {
-      q: 'How are scope, investment and schedule determined?',
-      a: 'Every project is scoped transparently around your objectives and deliverables during Strategize, rather than relying on one-size-fits-all templates or fixed assumptions.',
-    },
-    {
-      q: 'Do you support responsive websites and interactive visual experiences?',
-      a: 'Every digital experience we engineer is built mobile-first, tested across modern screen sizes and crafted with accessibility and smooth performance in mind.',
-    },
-  ];
+  const loadFaqs = async (signal) => {
+    try {
+      setFaqError(null);
+      const data = await fetchFaqs({ signal });
+      if (Array.isArray(data)) {
+        setFaqs(data);
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        setFaqError('Unable to refresh live FAQs.');
+      }
+    }
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadFaqs(controller.signal);
+    return () => controller.abort();
+  }, []);
 
   // Scroll-driven timeline illumination across #approach section
   useEffect(() => {
@@ -140,27 +167,43 @@ export default function Approach() {
             <h3 className="faq-block__heading">Before We Begin</h3>
           </div>
 
-          <div className="faq-list">
-            {faqs.map((item, idx) => {
-              const isOpen = openFaq === idx;
-              return (
-                <div key={item.q} className={`faq-item ${isOpen ? 'faq-item--open' : ''}`}>
-                  <button
-                    type="button"
-                    className="faq-item__trigger"
-                    onClick={() => setOpenFaq(isOpen ? -1 : idx)}
-                    aria-expanded={isOpen}
-                  >
-                    <span>{item.q}</span>
-                    <ChevronDown size={17} className="faq-item__chevron" aria-hidden="true" />
-                  </button>
-                  <div className="faq-item__panel">
-                    <p className="faq-item__answer">{item.a}</p>
+          {faqError && (
+            <div className="status-notice status-notice--subtle" role="status">
+              <span>{faqError}</span>
+              <button type="button" className="status-notice__retry" onClick={() => loadFaqs()}>
+                <RefreshCw size={13} aria-hidden="true" />
+                <span>Retry</span>
+              </button>
+            </div>
+          )}
+
+          {faqs.length === 0 ? (
+            <p className="faq-empty">Studio FAQs will appear here once published.</p>
+          ) : (
+            <div className="faq-list">
+              {faqs.map((item, idx) => {
+                const isOpen = openFaq === idx;
+                return (
+                  <div key={item.id || item.question} className={`faq-item ${isOpen ? 'faq-item--open' : ''}`}>
+                    <button
+                      type="button"
+                      className="faq-item__trigger"
+                      onClick={() => setOpenFaq(isOpen ? -1 : idx)}
+                      aria-expanded={isOpen}
+                    >
+                      <span>{item.question}</span>
+                      <ChevronDown size={17} className="faq-item__chevron" aria-hidden="true" />
+                    </button>
+                    <div className="faq-item__panel">
+                      <div className="faq-item__panel-inner">
+                        <p className="faq-item__answer">{item.answer}</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </section>

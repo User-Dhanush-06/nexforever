@@ -116,8 +116,8 @@ export default function ProjectGallery({
 
         <p className="portfolio__empty-text">
           {activeCategory === 'All'
-            ? 'This interactive left-to-right project showcase automatically populates with slide controls, media galleries and technical breakdowns as soon as work is added in src/data/projects.js.'
-            : `Case studies in ${activeCategory} will appear automatically in this horizontal showcase once added to src/data/projects.js.`}
+            ? 'This interactive left-to-right project showcase automatically populates with slide controls, media galleries and technical breakdowns as soon as case studies are published in our studio CMS.'
+            : `Published case studies in ${activeCategory} will appear automatically in this horizontal showcase.`}
         </p>
 
         <div className="portfolio__blueprint-row" aria-hidden="true">

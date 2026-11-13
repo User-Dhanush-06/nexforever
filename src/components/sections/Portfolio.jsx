@@ -1,42 +1,61 @@
 import React, { useEffect, useState } from 'react';
-import { Quote } from 'lucide-react';
+import { Quote, RefreshCw } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
 import GlassCard from '../ui/GlassCard';
 import ProjectGallery from '../portfolio/ProjectGallery';
 import ProjectModal from '../portfolio/ProjectModal';
 import {
-  projectsData,
+  projectsData as fallbackProjects,
   portfolioCategories,
-  loadPortfolioProjects,
 } from '../../data/projects';
 import {
-  testimonialsData,
-  loadTestimonials,
+  testimonialsData as fallbackTestimonials,
 } from '../../data/testimonials';
-import { siteConfig } from '../../data/config';
+import { fetchProjects, fetchTestimonials } from '../../services/apiClient';
 
 export default function Portfolio() {
-  const [projects, setProjects] = useState(projectsData);
-  const [testimonials, setTestimonials] = useState(testimonialsData);
+  const [projects, setProjects] = useState(fallbackProjects);
+  const [testimonials, setTestimonials] = useState(fallbackTestimonials);
   const [activeCategory, setActiveCategory] = useState('All');
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
-  // Backend-ready sync when optional endpoints are configured in src/data/config.js
+  const loadData = async (signal) => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const [projectsRes, testimonialsRes] = await Promise.allSettled([
+        fetchProjects({ signal }),
+        fetchTestimonials({ signal }),
+      ]);
+
+      if (projectsRes.status === 'fulfilled' && Array.isArray(projectsRes.value)) {
+        setProjects(projectsRes.value);
+      }
+      if (testimonialsRes.status === 'fulfilled' && Array.isArray(testimonialsRes.value)) {
+        // Map backend DTO to component format if needed
+        const mapped = testimonialsRes.value.map((t) => ({
+          id: t.id,
+          quote: t.quote,
+          author: t.authorName,
+          role: [t.authorRole, t.companyOrChannel].filter(Boolean).join(' • '),
+        }));
+        setTestimonials(mapped);
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        setLoadError('Unable to load live projects. Displaying offline showcase.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let active = true;
-    if (siteConfig.api?.projectsEndpoint) {
-      loadPortfolioProjects(siteConfig.api.projectsEndpoint).then((items) => {
-        if (active) setProjects(items);
-      });
-    }
-    if (siteConfig.api?.testimonialsEndpoint) {
-      loadTestimonials(siteConfig.api.testimonialsEndpoint).then((items) => {
-        if (active) setTestimonials(items);
-      });
-    }
-    return () => {
-      active = false;
-    };
+    const controller = new AbortController();
+    loadData(controller.signal);
+    return () => controller.abort();
   }, []);
 
   const filteredProjects =
@@ -71,6 +90,20 @@ export default function Portfolio() {
           title="Selected Work."
           subtitle="A curated archive of digital platforms, creative productions, brand systems and campaigns."
         />
+
+        {loadError && (
+          <div className="status-notice status-notice--subtle" role="status">
+            <span>{loadError}</span>
+            <button
+              type="button"
+              className="status-notice__retry"
+              onClick={() => loadData()}
+            >
+              <RefreshCw size={13} aria-hidden="true" />
+              <span>Retry</span>
+            </button>
+          </div>
+        )}
 
         {/* Category Filter Buttons */}
         <div className="portfolio__filters" role="group" aria-label="Filter Projects">

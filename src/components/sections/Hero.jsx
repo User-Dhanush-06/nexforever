@@ -4,8 +4,10 @@ import gsap from 'gsap';
 import Button from '../ui/Button';
 import { siteConfig } from '../../data/config';
 
-export default function Hero() {
+export default function Hero({ publicSettings }) {
   const heroRef = useRef(null);
+  const availabilityText =
+    publicSettings?.brand?.availability || siteConfig.brand.availability;
 
   const marqueeItems = [
     'Web Development',
@@ -46,7 +48,7 @@ export default function Hero() {
               </span>
               <span className="hero__status-pill">
                 <span className="hero__status-dot" aria-hidden="true" />
-                <span>{siteConfig.brand.availability}</span>
+                <span>{availabilityText}</span>
               </span>
             </div>
 

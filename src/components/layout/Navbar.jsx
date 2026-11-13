@@ -3,11 +3,13 @@ import { Menu, X } from 'lucide-react';
 import { siteConfig } from '../../data/config';
 import Button from '../ui/Button';
 
-export default function Navbar() {
+export default function Navbar({ publicSettings }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const [logoMissing, setLogoMissing] = useState(false);
+
+  const brandName = publicSettings?.brand?.name || siteConfig.brand.name;
 
   const navLinks = [
     { label: 'Home', href: '#home', id: 'home' },
@@ -66,14 +68,14 @@ export default function Navbar() {
               {!logoMissing ? (
                 <img
                   src={siteConfig.brand.logo}
-                  alt={siteConfig.brand.name}
+                  alt={brandName}
                   className="nav__logo"
                   onError={() => setLogoMissing(true)}
                 />
               ) : (
                 <span className="logo-placeholder" aria-hidden="true" />
               )}
-              <span className="nav__name">{siteConfig.brand.name}</span>
+              <span className="nav__name">{brandName}</span>
             </a>
 
             {/* Desktop Navigation Links */}

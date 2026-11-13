@@ -246,7 +246,7 @@
   }
 
   .service-card {
-    padding: 2rem 1.45rem;
+    padding: 2.25rem 1.6rem;
   }
 
   .audience-card,
@@ -341,7 +341,7 @@
 
   .assistant-panel {
     width: calc(100vw - 2rem);
-    max-height: min(460px, calc(100vh - 110px));
+    max-height: min(520px, calc(100vh - 100px));
   }
 
   .back-to-top-btn {
@@ -364,6 +364,12 @@
 
   .nav__name {
     font-size: 1rem;
+  }
+}
+
+@media (max-width: 370px) {
+  .hero__nowrap {
+    white-space: normal;
   }
 }
 

@@ -17,11 +17,20 @@ import GlassCard from '../ui/GlassCard';
 import Button from '../ui/Button';
 import { siteConfig } from '../../data/config';
 import { servicesData, packagesData } from '../../data/services';
+import { submitEnquiry } from '../../services/apiClient';
+import {
+  isConfiguredValue,
+  sanitizeExternalUrl,
+  formatInstagramUrl,
+  formatWhatsAppUrl,
+  formatEmailHref,
+} from '../../utils/linkHelpers';
 
 export default function Contact({
   preselectedService = '',
   preselectedAudience = '',
   preselectedPackage = '',
+  publicSettings,
 }) {
   const [wizardStep, setWizardStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -33,6 +42,7 @@ export default function Contact({
     budget: 'Flexible / To Be Discussed',
     timeline: 'Flexible / To Be Discussed',
     message: '',
+    website: '', // Anti-spam honeypot field
   });
 
   const [errors, setErrors] = useState({});
@@ -89,22 +99,26 @@ export default function Contact({
     }
   }, [preselectedPackage]);
 
-  const isEmailConfigured =
-    siteConfig.contact.email && !siteConfig.contact.email.startsWith('[');
-  const isWhatsappConfigured =
-    siteConfig.contact.whatsapp && !siteConfig.contact.whatsapp.startsWith('[');
-  const isInstagramConfigured =
-    siteConfig.contact.instagram && !siteConfig.contact.instagram.startsWith('[');
+  const contactData = {
+    email: publicSettings?.contact?.email || '',
+    whatsapp: publicSettings?.contact?.whatsapp || '',
+    instagram: publicSettings?.contact?.instagram || '',
+    location: publicSettings?.contact?.location || siteConfig.contact.location,
+    locationMapUrl: publicSettings?.contact?.locationMapUrl || '',
+  };
 
-  const whatsappDigits = isWhatsappConfigured
-    ? siteConfig.contact.whatsapp.replace(/[^\d]/g, '')
-    : '';
-  const whatsappText = encodeURIComponent(
-    `Hi NexForever, I'd like to discuss a project. Profile: ${formData.audience}. Package: ${formData.packageName}.${formData.service ? ` Service: ${formData.service}.` : ''}${formData.budget ? ` Scope: ${formData.budget}.` : ''}`
-  );
-  const whatsappHref = whatsappDigits
-    ? `https://wa.me/${whatsappDigits}?text=${whatsappText}`
-    : '';
+  const emailHref = formatEmailHref(contactData.email);
+  const whatsappMsg = `Hi NexForever, I'd like to discuss a project. Profile: ${formData.audience}. Package: ${formData.packageName}.${formData.service ? ` Service: ${formData.service}.` : ''}${formData.budget ? ` Scope: ${formData.budget}.` : ''}`;
+  const whatsappHref = formatWhatsAppUrl(contactData.whatsapp, whatsappMsg);
+  const instagramHref = formatInstagramUrl(contactData.instagram);
+  const instagramDisplay = isConfiguredValue(contactData.instagram)
+    ? (contactData.instagram.startsWith('@')
+        ? contactData.instagram
+        : contactData.instagram.includes('/')
+          ? '@' + contactData.instagram.split('/').filter(Boolean).pop()
+          : '@' + contactData.instagram)
+    : 'Direct Studio Channel';
+  const locationMapHref = sanitizeExternalUrl(contactData.locationMapUrl);
 
   const validateField = (field, value) => {
     if (field === 'name' && !value.trim()) return 'Please enter your name.';
@@ -141,7 +155,7 @@ export default function Contact({
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setStatusMessage(null);
     if (!validateAll()) {
@@ -149,38 +163,43 @@ export default function Contact({
       return;
     }
 
-    const completeSubmission = () => {
-      setIsSubmitting(false);
-      if (!isEmailConfigured) {
-        setStatusMessage({
-          type: 'warning',
-          text: 'Direct email dispatch requires configuring your email in src/data/config.js. Your enquiry details were validated locally.',
-        });
-        return;
-      }
+    setIsSubmitting(true);
+    try {
+      const saved = await submitEnquiry({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        audienceProfile: formData.audience,
+        packageName: formData.packageName,
+        serviceInterest: formData.service || 'General Enquiry',
+        budgetScope: formData.budget,
+        planningPreference: formData.timeline,
+        message: formData.message.trim(),
+        website: formData.website,
+      });
 
-      const subject = encodeURIComponent(
-        `NexForever Enquiry from ${formData.name}${formData.service ? ` (${formData.service})` : ''}`
-      );
-      const body = encodeURIComponent(
-        `Name: ${formData.name}\nEmail: ${formData.email}\nProfile: ${formData.audience}\nPackage Framework: ${formData.packageName}\nService: ${formData.service || 'General Enquiry'}\nBudget Scope: ${formData.budget}\nPlanning Window: ${formData.timeline}\n\nProject Details:\n${formData.message}`
-      );
-
-      window.location.href = `mailto:${siteConfig.contact.email}?subject=${subject}&body=${body}`;
       setStatusMessage({
         type: 'success',
-        text: 'Validation passed — opening your default email client with your project summary.',
+        text: `Enquiry received and saved${saved?.referenceCode ? ` (Ref: ${saved.referenceCode})` : ''}. Our studio team will follow up shortly.`,
       });
-    };
-
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReduced) {
-      completeSubmission();
-      return;
+      setFormData((prev) => ({
+        ...prev,
+        name: '',
+        email: '',
+        message: '',
+        website: '',
+      }));
+      setErrors({});
+    } catch (err) {
+      if (err?.errors && typeof err.errors === 'object') {
+        setErrors(err.errors);
+      }
+      setStatusMessage({
+        type: err?.status === 429 ? 'warning' : 'error',
+        text: err?.message || 'Unable to submit your enquiry right now. Please try again.',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(true);
-    setTimeout(completeSubmission, 360);
   };
 
   return (
@@ -202,16 +221,16 @@ export default function Contact({
                 </div>
                 <div>
                   <span className="contact__item-label">Email</span>
-                  {isEmailConfigured ? (
+                  {emailHref ? (
                     <a
-                      href={`mailto:${siteConfig.contact.email}`}
+                      href={emailHref}
                       className="contact__item-val"
                     >
-                      {siteConfig.contact.email}
+                      {contactData.email}
                     </a>
                   ) : (
-                    <span className="contact__item-val contact__item-val--placeholder">
-                      {siteConfig.contact.email}
+                    <span className="contact__item-val">
+                      {isConfiguredValue(contactData.email) ? contactData.email : 'Direct Studio Desk'}
                     </span>
                   )}
                 </div>
@@ -230,11 +249,11 @@ export default function Contact({
                       rel="noopener noreferrer"
                       className="contact__item-val"
                     >
-                      Chat on WhatsApp ({siteConfig.contact.whatsapp})
+                      Chat on WhatsApp ({contactData.whatsapp})
                     </a>
                   ) : (
-                    <span className="contact__item-val contact__item-val--placeholder">
-                      {siteConfig.contact.whatsapp}
+                    <span className="contact__item-val">
+                      {isConfiguredValue(contactData.whatsapp) ? contactData.whatsapp : 'Direct Client Line'}
                     </span>
                   )}
                 </div>
@@ -246,18 +265,18 @@ export default function Contact({
                 </div>
                 <div>
                   <span className="contact__item-label">Instagram</span>
-                  {isInstagramConfigured ? (
+                  {instagramHref ? (
                     <a
-                      href={siteConfig.contact.instagram}
+                      href={instagramHref}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="contact__item-val"
                     >
-                      {siteConfig.contact.instagram}
+                      {instagramDisplay}
                     </a>
                   ) : (
-                    <span className="contact__item-val contact__item-val--placeholder">
-                      {siteConfig.contact.instagram}
+                    <span className="contact__item-val">
+                      {instagramDisplay}
                     </span>
                   )}
                 </div>
@@ -269,9 +288,20 @@ export default function Contact({
                 </div>
                 <div>
                   <span className="contact__item-label">Location</span>
-                  <span className="contact__item-val">
-                    {siteConfig.contact.location}
-                  </span>
+                  {locationMapHref ? (
+                    <a
+                      href={locationMapHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="contact__item-val"
+                    >
+                      {contactData.location}
+                    </a>
+                  ) : (
+                    <span className="contact__item-val">
+                      {contactData.location}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -292,15 +322,6 @@ export default function Contact({
 
           {/* Right: 3-Step Project Inquiry Wizard */}
           <GlassCard className="contact__form-card" hoverEffect={false}>
-            {!isEmailConfigured && (
-              <div className="contact__notice" role="alert">
-                <AlertCircle size={16} className="contact__notice-icon" />
-                <span>
-                  <strong>Setup required:</strong> Add your email in <code>src/data/config.js</code> to activate direct mailto submissions.
-                </span>
-              </div>
-            )}
-
             {/* Wizard Step Progress Navigation */}
             <div className="wizard-steps" role="tablist" aria-label="Inquiry Wizard Steps">
               {[
@@ -329,6 +350,17 @@ export default function Contact({
             </div>
 
             <form onSubmit={handleSubmit} noValidate className="contact__form">
+              {/* Anti-bot honeypot field - invisible to genuine users */}
+              <input
+                type="text"
+                name="website"
+                value={formData.website}
+                onChange={(e) => handleFieldChange('website', e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', opacity: 0 }}
+              />
               {/* Step 1: Audience & Service Selection */}
               {wizardStep === 1 && (
                 <div className="wizard-pane" role="tabpanel" aria-label="Step 1: Select Service">
@@ -570,7 +602,7 @@ export default function Contact({
                       className={`btn-submit ${isSubmitting ? 'btn-submit--loading' : ''}`}
                       disabled={isSubmitting}
                     >
-                      {isSubmitting ? 'Preparing Message...' : 'Send Enquiry'}
+                      {isSubmitting ? 'Sending Enquiry...' : 'Send Enquiry'}
                     </Button>
                   </div>
 

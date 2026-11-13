@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, lazy, Suspense, useCallback } from 'react';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -14,18 +14,97 @@ import Approach from './components/sections/Approach';
 import Contact from './components/sections/Contact';
 import RobotAssistant from './components/assistant/RobotAssistant';
 import { useScrollProgress } from './hooks/useScrollProgress';
+import { fetchPublicSettings, fetchCurrentAdmin } from './services/apiClient';
+
+const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage'));
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function App() {
   const shellRef = useRef(null);
+  const [currentPath, setCurrentPath] = useState(() =>
+    typeof window !== 'undefined' ? window.location.pathname : '/'
+  );
+  const [publicSettings, setPublicSettings] = useState(null);
+  const [adminUser, setAdminUser] = useState(null);
+  const [checkingAuth, setCheckingAuth] = useState(false);
+
   const [selectedService, setSelectedService] = useState('');
   const [selectedPackage, setSelectedPackage] = useState('');
   const [selectedAudience, setSelectedAudience] = useState('');
   const { progress, showBackToTop, scrollToTop } = useScrollProgress();
 
-  // Initialize Lenis smooth scroll & GSAP ScrollTrigger reveals
+  const isAdminRoute = currentPath.startsWith('/admin');
+
+  const navigateTo = useCallback((path) => {
+    if (typeof window === 'undefined') return;
+    if (window.location.pathname !== path) {
+      window.history.pushState({}, '', path);
+      setCurrentPath(path);
+      window.scrollTo(0, 0);
+    }
+  }, []);
+
+  // Listen to browser back/forward navigation
   useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Fetch public site settings whenever on or returning to public homepage
+  useEffect(() => {
+    if (isAdminRoute) return;
+    const controller = new AbortController();
+    fetchPublicSettings({ signal: controller.signal })
+      .then((data) => {
+        if (data) setPublicSettings(data);
+      })
+      .catch(() => {
+        // Fallback smoothly to static defaults inside components
+      });
+    return () => controller.abort();
+  }, [isAdminRoute]);
+
+  // Verify admin session when navigating to /admin routes
+  useEffect(() => {
+    if (!isAdminRoute) return;
+    if (adminUser) return;
+
+    let active = true;
+    setCheckingAuth(true);
+    fetchCurrentAdmin()
+      .then((user) => {
+        if (active && user) {
+          setAdminUser(user);
+          if (currentPath === '/admin/login') {
+            navigateTo('/admin');
+          }
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setAdminUser(null);
+          if (currentPath !== '/admin/login') {
+            navigateTo('/admin/login');
+          }
+        }
+      })
+      .finally(() => {
+        if (active) setCheckingAuth(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isAdminRoute, currentPath, adminUser, navigateTo]);
+
+  // Initialize Lenis smooth scroll & GSAP ScrollTrigger reveals ONLY on public landing page
+  useEffect(() => {
+    if (isAdminRoute) return;
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) return;
 
@@ -85,7 +164,31 @@ export default function App() {
       gsap.ticker.remove(updateLenis);
       lenis.destroy();
     };
-  }, []);
+  }, [isAdminRoute]);
+
+  if (isAdminRoute) {
+    return (
+      <Suspense fallback={<div className="admin-loading-shell">Loading NexForever Admin...</div>}>
+        {checkingAuth ? (
+          <div className="admin-loading-shell">Verifying Studio Session...</div>
+        ) : currentPath === '/admin/login' || !adminUser ? (
+          <AdminLoginPage
+            onLoginSuccess={(user) => {
+              setAdminUser(user);
+              navigateTo('/admin');
+            }}
+            onNavigate={navigateTo}
+          />
+        ) : (
+          <AdminDashboardPage
+            admin={adminUser}
+            onLogout={() => setAdminUser(null)}
+            onNavigate={navigateTo}
+          />
+        )}
+      </Suspense>
+    );
+  }
 
   return (
     <div ref={shellRef} className="site-shell">
@@ -106,10 +209,10 @@ export default function App() {
 
       {/* Main Website Content Layer */}
       <div className="website-content">
-        <Navbar />
+        <Navbar publicSettings={publicSettings} />
 
         <main id="main-content">
-          <Hero />
+          <Hero publicSettings={publicSettings} />
           <About />
           <Services
             onEnquireService={setSelectedService}
@@ -122,10 +225,11 @@ export default function App() {
             preselectedService={selectedService}
             preselectedAudience={selectedAudience}
             preselectedPackage={selectedPackage}
+            publicSettings={publicSettings}
           />
         </main>
 
-        <Footer />
+        <Footer publicSettings={publicSettings} />
       </div>
 
       {/* Back to Top Floating Button */}
